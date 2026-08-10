@@ -757,8 +757,8 @@ ContentCorner.Parent = ContentArea
 -- Painéis de conteúdo por aba
 local ContentPanels = {}
 
--- Funções para criar elementos da UI
-function CreateToggle(parent, label, defaultValue, callback)
+-- Função para criar toggle
+local function CreateToggle(parent, label, defaultValue, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -20, 0, 40)
     frame.BackgroundTransparency = 1
@@ -791,4 +791,4 @@ function CreateToggle(parent, label, defaultValue, callback)
     toggleCircle.Position = defaultValue and UDim2.new(1, -24, 0.5, -10) or UDim2.new(0, 4, 0.5, -10)
     toggleCircle.BackgroundColor3 = HubConfig.Theme.Text
     toggleCircle.BackgroundTransparency = 0.2
-    toggleCircle.Border
+    toggleCircle.BorderSize
