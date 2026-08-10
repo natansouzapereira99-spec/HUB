@@ -1,368 +1,764 @@
-```lua
---// GTVZ KEY SYSTEM - versão corrigida
---// Sistema de interface e validação local da chave
-
-local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local TeleportService = game:GetService("TeleportService")
+local CoreGui = game:GetService("CoreGui")
+local ContentProvider = game:GetService("ContentProvider")
+local HttpService = game:GetService("HttpService")
 
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
+repeat task.wait() until game:IsLoaded()
 
---==================================================
--- CONFIG
---==================================================
+local INFO_DOT25_QUAD = TweenInfo.new(.25, Enum.EasingStyle.Quad)
 
-local VALID_KEY = "GTVZ_FREEHS62BEU746"
-local KEY_FILE = "GTVZ_Key.txt"
+local GET_LINK = "LINK KEY"
+local SECRET_KEY = "KEY"
+local savedKeyFile = "KEYSYSTEM.txt"
+local DISCORD_LINK = "https://discord.gg/SXtfYJSPny"
 
---==================================================
--- FUNÇÕES DE ARQUIVO
---==================================================
-
-local function SaveKey(key)
-    if writefile then
-        pcall(function()
-            writefile(KEY_FILE, key)
-        end)
-    end
+local function saveKey(key)
+	if not key then return end
+	if writefile then pcall(function() writefile(savedKeyFile, key) end) end
 end
 
-local function LoadSavedKey()
-    if isfile and readfile then
-        local success, result = pcall(function()
-            if isfile(KEY_FILE) then
-                return readfile(KEY_FILE)
-            end
-        end)
-
-        if success then
-            return result
-        end
-    end
-
-    return nil
+local function loadSavedKey()
+	if isfile and isfile(savedKeyFile) then
+		local ok, res = pcall(function() return readfile(savedKeyFile) end)
+		if ok and res then return res end
+	end
+	return nil
 end
 
-local function IsKeyValid(key)
-    return key == VALID_KEY
-end
-
---==================================================
--- LIMPAR GUI ANTIGA
---==================================================
-
-local oldGui = PlayerGui:FindFirstChild("GTVZ_KeySystem")
-
-if oldGui then
-    oldGui:Destroy()
-end
-
---==================================================
--- NOTIFICAÇÃO
---==================================================
-
-local function Notification(title, message, duration)
-    local gui = Instance.new("ScreenGui")
-    gui.Name = "GTVZ_Notification"
-    gui.ResetOnSpawn = false
-    gui.Parent = PlayerGui
-
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(0, 300, 0, 80)
-    frame.Position = UDim2.new(1, 20, 0.1, 0)
-    frame.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-    frame.Parent = gui
-
-    local corner = Instance.new("UICorner")
-    corner.CornerRadius = UDim.new(0, 6)
-    corner.Parent = frame
-
-    local stroke = Instance.new("UIStroke")
-    stroke.Color = Color3.fromRGB(0, 255, 0)
-    stroke.Thickness = 1
-    stroke.Parent = frame
-
-    local titleLabel = Instance.new("TextLabel")
-    titleLabel.BackgroundTransparency = 1
-    titleLabel.Position = UDim2.new(0, 15, 0, 8)
-    titleLabel.Size = UDim2.new(1, -30, 0, 22)
-    titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.Text = title
-    titleLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
-    titleLabel.TextSize = 14
-    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    titleLabel.Parent = frame
-
-    local messageLabel = Instance.new("TextLabel")
-    messageLabel.BackgroundTransparency = 1
-    messageLabel.Position = UDim2.new(0, 15, 0, 32)
-    messageLabel.Size = UDim2.new(1, -30, 0, 35)
-    messageLabel.Font = Enum.Font.Gotham
-    messageLabel.Text = message
-    messageLabel.TextColor3 = Color3.fromRGB(220, 220, 220)
-    messageLabel.TextSize = 12
-    messageLabel.TextWrapped = true
-    messageLabel.TextXAlignment = Enum.TextXAlignment.Left
-    messageLabel.Parent = frame
-
-    TweenService:Create(
-        frame,
-        TweenInfo.new(0.35, Enum.EasingStyle.Quart),
-        {Position = UDim2.new(1, -320, 0.1, 0)}
-    ):Play()
-
-    task.delay(duration or 3, function()
-        if not gui.Parent then
-            return
-        end
-
-        local tween = TweenService:Create(
-            frame,
-            TweenInfo.new(0.3, Enum.EasingStyle.Quart),
-            {Position = UDim2.new(1, 20, 0.1, 0)}
-        )
-
-        tween:Play()
-        tween.Completed:Wait()
-
-        gui:Destroy()
+local function CoreGuiAdd(gui)
+    repeat wait() until pcall(function()
+        gui.Parent = CoreGui
     end)
 end
 
---==================================================
--- KEY GUI
---==================================================
+local PreloadID = {
+    "rbxassetid://4560909609",
+    "rbxassetid://12187376174",
+}
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "GTVZ_KeySystem"
-ScreenGui.ResetOnSpawn = false
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = PlayerGui
+do
+    HOHO_Passcheck = Instance.new("ScreenGui")
+    INTRO = Instance.new("CanvasGroup")
+    Wallpaper = Instance.new("ImageLabel")
+    TextHolder = Instance.new("Frame")
+    Status = Instance.new("TextLabel")
+    UITextSizeConstraint = Instance.new("UITextSizeConstraint")
+    Gradient = Instance.new("Frame")
+    UIGradient = Instance.new("UIGradient")
+    Pattern = Instance.new("ImageLabel")
+    Logo = Instance.new("ImageLabel")
+    Main = Instance.new("ImageLabel")
+    UIAspectRatioConstraint = Instance.new("UIAspectRatioConstraint")
+    Loader = Instance.new("Frame")
+    Content = Instance.new("Frame")
+    UIStroke = Instance.new("UIStroke")
+    ImageLabel = Instance.new("ImageLabel")
+    UIAspectRatioConstraint_1 = Instance.new("UIAspectRatioConstraint")
+    UICorner = Instance.new("UICorner")
+    GET_KEY = Instance.new("CanvasGroup")
+    UICorner_1 = Instance.new("UICorner")
+    Logo_1 = Instance.new("ImageLabel")
+    UIAspectRatioConstraint_2 = Instance.new("UIAspectRatioConstraint")
+    Get = Instance.new("TextButton")
+    UICorner_2 = Instance.new("UICorner")
+    UIStroke_1 = Instance.new("UIStroke")
+    Title = Instance.new("TextLabel")
+    Submit = Instance.new("TextButton")
+    UICorner_3 = Instance.new("UICorner")
+    UIStroke_2 = Instance.new("UIStroke")
+    Title_1 = Instance.new("TextLabel")
+    Pfp = Instance.new("ImageLabel")
+    UICorner_4 = Instance.new("UICorner")
+    Support = Instance.new("TextButton")
+    UICorner_5 = Instance.new("UICorner")
+    UIStroke_3 = Instance.new("UIStroke")
+    Title_2 = Instance.new("TextLabel")
+    Credit = Instance.new("TextLabel")
+    Close = Instance.new("TextButton")
+    Title_3 = Instance.new("TextLabel")
+    UIStroke_4 = Instance.new("UIStroke")
+    UICorner_6 = Instance.new("UICorner")
+    Frame = Instance.new("Frame")
+    UIStroke_5 = Instance.new("UIStroke")
+    UIGradient_2 = Instance.new("UIGradient")
+    UIGradient_3 = Instance.new("UIGradient")
+    UICorner_7 = Instance.new("UICorner")
+    Frame_1 = Instance.new("TextLabel")
+    Frame_2 = Instance.new("TextBox")
+    UIStroke_6 = Instance.new("UIStroke")
+    UICorner_8 = Instance.new("UICorner")
+    UICorner_9 = Instance.new("UICorner")
+    Gradient_1 = Instance.new("Frame")
+    UIGradient_1 = Instance.new("UIGradient")
+    Pattern_1 = Instance.new("ImageLabel")
+    Hover = Instance.new("ImageLabel")
+    local Hover_2
+    Gradient_Frame = Instance.new("Frame")
+    UIGradient_4 = Instance.new("UIGradient")
 
-local Main = Instance.new("Frame")
-Main.Name = "Main"
-Main.Size = UDim2.new(0, 404, 0, 206)
-Main.Position = UDim2.new(0.5, -202, 0.5, -103)
-Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Main.Active = true
-Main.Parent = ScreenGui
+    HOHO_Passcheck.IgnoreGuiInset = true
+    HOHO_Passcheck.ResetOnSpawn = false
+    HOHO_Passcheck.Name = "Hоhо_раssсhесk"
+    HOHO_Passcheck.ScreenInsets = Enum.ScreenInsets.DeviceSafeInsets
+    HOHO_Passcheck.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    CoreGuiAdd(HOHO_Passcheck)
+    HOHO_Passcheck.Enabled = true
 
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 8)
-MainCorner.Parent = Main
+    INTRO.BorderSizePixel = 0
+    INTRO.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    INTRO.AnchorPoint = Vector2.new(0.5, 0.5)
+    INTRO.Size = UDim2.new(0.455271, 0, 0.46186, 0)
+    INTRO.ZIndex = 990
+    INTRO.Name = "INTRO"
+    INTRO.Position = UDim2.new(0.5, 0, 0.5, 0)
+    INTRO.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    INTRO.Parent = HOHO_Passcheck
 
-local MainStroke = Instance.new("UIStroke")
-MainStroke.Color = Color3.fromRGB(0, 255, 0)
-MainStroke.Thickness = 2
-MainStroke.Parent = Main
+    Hover.ImageColor3 = Color3.fromRGB(255, 51, 51)
+    Hover.BorderSizePixel = 0
+    Hover.SliceCenter = Rect.new(205, 197, 828, 828)
+    Hover.ScaleType = Enum.ScaleType.Slice
+    Hover.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Hover.ImageTransparency = 1
+    Hover.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Hover.Name = "Hover"
+    Hover.AnchorPoint = Vector2.new(0.5, 0.5)
+    Hover.Image = "rbxassetid://16261022724"
+    Hover.Size = UDim2.new(1.055, 0, 1.45, 0)
+    Hover.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Hover.BackgroundTransparency = 1
+    Hover.Parent = Get
 
---==================================================
--- TÍTULO
---==================================================
+    Hover_2 = Hover:Clone()
+    Hover_2.Parent = Submit
 
-local Title = Instance.new("TextLabel")
-Title.BackgroundTransparency = 1
-Title.Position = UDim2.new(0, 0, 0, 5)
-Title.Size = UDim2.new(1, 0, 0, 30)
-Title.Font = Enum.Font.GothamBold
-Title.Text = "GTVZ KEY SYSTEM"
-Title.TextColor3 = Color3.fromRGB(0, 255, 0)
-Title.TextSize = 17
-Title.Parent = Main
+    Wallpaper.BorderSizePixel = 0
+    Wallpaper.ScaleType = Enum.ScaleType.Fit
+    Wallpaper.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Wallpaper.Position = UDim2.new(-0.0361702, 0, -0.158876, 0)
+    Wallpaper.Name = "Wallpaper"
+    Wallpaper.Image = "rbxassetid://16073585738"
+    Wallpaper.Size = UDim2.new(1.11064, 0, 1.59989, 0)
+    Wallpaper.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Wallpaper.Parent = INTRO
 
-local Line = Instance.new("Frame")
-Line.BorderSizePixel = 0
-Line.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-Line.Position = UDim2.new(0, 10, 0, 42)
-Line.Size = UDim2.new(1, -20, 0, 2)
-Line.Parent = Main
+    TextHolder.BorderSizePixel = 0
+    TextHolder.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    TextHolder.Size = UDim2.new(1, 0, 0.284847, 0)
+    TextHolder.BorderColor3 = Color3.fromRGB(30, 30, 30)
+    TextHolder.Name = "TextHolder"
+    TextHolder.Position = UDim2.new(0, 0, 0.753631, 0)
+    TextHolder.Parent = INTRO
 
---==================================================
--- TEXTBOX
---==================================================
+    Status.TextWrapped = true
+    Status.BorderSizePixel = 0
+    Status.TextScaled = true
+    Status.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Status.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Italic)
+    Status.Position = UDim2.new(0.120042, 0, 0.254529, 0)
+    Status.Name = "Status"
+    Status.TextSize = 20
+    Status.Size = UDim2.new(0.79993, 0, 0.464041, 0)
+    Status.ZIndex = 2
+    Status.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Status.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Status.Text = "Preparing your HUB for an amazing experience."
+    Status.BackgroundTransparency = 1
+    Status.Parent = TextHolder
+    Status:SetAttribute("EngText", Status.Text)
 
-local KeyBox = Instance.new("TextBox")
-KeyBox.Name = "KeyBox"
-KeyBox.BackgroundColor3 = Color3.fromRGB(8, 8, 8)
-KeyBox.Position = UDim2.new(0, 100, 0, 60)
-KeyBox.Size = UDim2.new(0, 204, 0, 42)
-KeyBox.Font = Enum.Font.Gotham
-KeyBox.PlaceholderText = "CHAVE 🔑"
-KeyBox.Text = ""
-KeyBox.TextColor3 = Color3.fromRGB(0, 255, 0)
-KeyBox.PlaceholderColor3 = Color3.fromRGB(100, 100, 100)
-KeyBox.TextSize = 13
-KeyBox.ClearTextOnFocus = false
-KeyBox.Parent = Main
+    UITextSizeConstraint.MaxTextSize = 20
+    UITextSizeConstraint.Parent = Status
 
-local KeyCorner = Instance.new("UICorner")
-KeyCorner.CornerRadius = UDim.new(0, 5)
-KeyCorner.Parent = KeyBox
+    Gradient.BorderSizePixel = 0
+    Gradient.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Gradient.Size = UDim2.new(1, 0, 1, 0)
+    Gradient.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Gradient.Name = "Gradient"
+    Gradient.Position = UDim2.new(0, 0, 2.11993e-08, 0)
+    Gradient.Parent = TextHolder
 
-local KeyStroke = Instance.new("UIStroke")
-KeyStroke.Color = Color3.fromRGB(0, 255, 0)
-KeyStroke.Thickness = 1
-KeyStroke.Parent = KeyBox
+    UIGradient.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 0.9),
+        NumberSequenceKeypoint.new(1, 0.9)
+    }
+    UIGradient.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(157, 2, 31)),
+        ColorSequenceKeypoint.new(0.466321, Color3.fromRGB(139.758, 6.07549, 31.0759)),
+        ColorSequenceKeypoint.new(0.797927, Color3.fromRGB(46.7098, 28.0691, 31.4853)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 30))
+    }
+    UIGradient.Rotation = -90
+    UIGradient.Parent = Gradient
 
---==================================================
--- BOTÃO PEGAR CHAVE
---==================================================
+    Pattern.SliceCenter = Rect.new(0, 256, 0, 256)
+    Pattern.ScaleType = Enum.ScaleType.Tile
+    Pattern.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Pattern.ImageTransparency = 0.6
+    Pattern.Position = UDim2.new(6.64996e-05, 0, 0.00124399, 0)
+    Pattern.Name = "Pattern"
+    Pattern.Image = "rbxassetid://2151741365"
+    Pattern.TileSize = UDim2.new(0, 250, 0, 250)
+    Pattern.Size = UDim2.new(1, 0, 1, 0)
+    Pattern.ZIndex = 0
+    Pattern.BackgroundTransparency = 1
+    Pattern.Parent = Gradient
 
-local GetKey = Instance.new("TextButton")
-GetKey.Name = "GetKey"
-GetKey.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-GetKey.Position = UDim2.new(0, 100, 0, 112)
-GetKey.Size = UDim2.new(0, 98, 0, 38)
-GetKey.Font = Enum.Font.GothamBold
-GetKey.Text = "PEGAR CHAVE"
-GetKey.TextColor3 = Color3.fromRGB(0, 255, 0)
-GetKey.TextSize = 11
-GetKey.Parent = Main
+    Logo.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    Logo.BorderSizePixel = 0
+    Logo.ScaleType = Enum.ScaleType.Fit
+    Logo.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Logo.ImageTransparency = 0.5
+    Logo.Position = UDim2.new(0.271609, 0, 0.122057, 0)
+    Logo.Name = "Logo"
+    Logo.Image = "rbxassetid://16073594682"
+    Logo.Size = UDim2.new(0.453191, 0, 0.550704, 0)
+    Logo.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Logo.ZIndex = 2
+    Logo.BackgroundTransparency = 1
+    Logo.Parent = INTRO
 
-local GetCorner = Instance.new("UICorner")
-GetCorner.CornerRadius = UDim.new(0, 5)
-GetCorner.Parent = GetKey
+    Main.BorderSizePixel = 0
+    Main.ScaleType = Enum.ScaleType.Fit
+    Main.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Main.Name = "Main"
+    Main.AnchorPoint = Vector2.new(0.5, 0.5)
+    Main.Image = "rbxassetid://16073594682"
+    Main.Size = UDim2.new(0.95, 0, 0.95, 0)
+    Main.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Main.BackgroundTransparency = 1
+    Main.Parent = Logo
 
-local GetStroke = Instance.new("UIStroke")
-GetStroke.Color = Color3.fromRGB(0, 255, 0)
-GetStroke.Parent = GetKey
+    UIAspectRatioConstraint.AspectRatio = 2.08357
+    UIAspectRatioConstraint.Parent = INTRO
 
-GetKey.MouseButton1Click:Connect(function()
-    local link = "https://link-target.net/1344304/gtvz-hub"
+    Loader.BorderSizePixel = 0
+    Loader.BackgroundColor3 = Color3.fromRGB(16, 16, 16)
+    Loader.Size = UDim2.new(0.999948, 0, 0.0285966, 0)
+    Loader.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Loader.Name = "Loader"
+    Loader.Position = UDim2.new(0, 0, 0.751682, 0)
+    Loader.ZIndex = 2
+    Loader.Parent = INTRO
 
-    if setclipboard then
-        pcall(function()
-            setclipboard(link)
+    Content.BorderSizePixel = 0
+    Content.BackgroundColor3 = Color3.fromRGB(255, 51, 51)
+    Content.Size = UDim2.new(0.462745, 0, 1, 0)
+    Content.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Content.Name = "Content"
+    Content.Parent = Loader
+
+    UIStroke.Transparency = 0.5
+    UIStroke.Parent = Content
+
+    ImageLabel.ImageColor3 = Color3.fromRGB(255, 46, 46)
+    ImageLabel.BorderSizePixel = 0
+    ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ImageLabel.Position = UDim2.new(1, 0, .5, 0)
+    ImageLabel.AnchorPoint = Vector2.new(.5, .5)
+    ImageLabel.Image = "rbxassetid://16073652319"
+    ImageLabel.Size = UDim2.new(0.671884, 0, 15.1201, 0)
+    ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ImageLabel.BackgroundTransparency = 1
+    ImageLabel.Parent = Content
+
+    UIAspectRatioConstraint_1.AspectRatio = 1.49814
+    UIAspectRatioConstraint_1.Parent = ImageLabel
+
+    UICorner.CornerRadius = UDim.new(0, 30)
+    UICorner.Parent = INTRO
+
+    GET_KEY.BorderSizePixel = 0
+    GET_KEY.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    GET_KEY.AnchorPoint = Vector2.new(0.5, 0.5)
+    GET_KEY.Size = UDim2.new(0.359117, 0, 0.665296, 0)
+    GET_KEY.ZIndex = 990
+    GET_KEY.Name = "GET_KEY"
+    GET_KEY.Position = UDim2.new(0.5, 0, 0.5, 0)
+    GET_KEY.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    GET_KEY.Parent = HOHO_Passcheck
+
+    UICorner_1.CornerRadius = UDim.new(0.075, 0)
+    UICorner_1.Parent = GET_KEY
+
+    Logo_1.BorderSizePixel = 0
+    Logo_1.ScaleType = Enum.ScaleType.Fit
+    Logo_1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Logo_1.Position = UDim2.new(0.256362, 0, 0.0700547, 0)
+    Logo_1.Name = "Logo"
+    Logo_1.Image = "rbxassetid://16073594682"
+    Logo_1.Size = UDim2.new(0.481145, 0, 0.133585, 0)
+    Logo_1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Logo_1.ZIndex = 2
+    Logo_1.BackgroundTransparency = 1
+    Logo_1.Parent = GET_KEY
+
+    UIAspectRatioConstraint_2.AspectRatio = 1.14096
+    UIAspectRatioConstraint_2.Parent = GET_KEY
+
+    Get.TextWrapped = true
+    Get.ZIndex = 2
+    Get.BorderSizePixel = 0
+    Get.AutoButtonColor = false
+    Get.TextScaled = true
+    Get.BackgroundColor3 = Color3.fromRGB(194, 3, 38)
+    Get.Position = UDim2.new(0.50063, 0, 0.45377, 0)
+    Get.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    Get.Name = "Get"
+    Get.AnchorPoint = Vector2.new(0.5, 0.5)
+    Get.Active = false
+    Get.TextSize = 20
+    Get.Size = UDim2.new(0.838618, 0, 0.095, 0)
+    Get.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Get.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Get.Text = ""
+    Get.Selectable = false
+    Get.Parent = GET_KEY
+
+    UICorner_2.CornerRadius = UDim.new(0, 7)
+    UICorner_2.Parent = Get
+
+    UIStroke_1.Color = Color3.fromRGB(253, 1, 12)
+    UIStroke_1.Transparency = 0.5
+    UIStroke_1.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    UIStroke_1.Parent = Get
+
+    Title.TextWrapped = true
+    Title.BorderSizePixel = 0
+    Title.TextScaled = true
+    Title.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Title.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    Title.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Title.Name = "Title"
+    Title.AnchorPoint = Vector2.new(0.5, 0.5)
+    Title.Size = UDim2.new(1, 0, 0.546077, 0)
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Title.Text = "GET KEY"
+    Title.BackgroundTransparency = 1
+    Title.Parent = Get
+    Title:SetAttribute("EngText", Title.Text)
+
+    Submit.TextWrapped = true
+    Submit.ZIndex = 2
+    Submit.BorderSizePixel = 0
+    Submit.AutoButtonColor = false
+    Submit.TextScaled = true
+    Submit.BackgroundColor3 = Color3.fromRGB(194, 3, 38)
+    Submit.Position = UDim2.new(0.50063, 0, 0.578448, 0)
+    Submit.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    Submit.Name = "Submit"
+    Submit.AnchorPoint = Vector2.new(0.5, 0.5)
+    Submit.Active = false
+    Submit.TextSize = 20
+    Submit.Size = UDim2.new(0.838618, 0, 0.095, 0)
+    Submit.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Submit.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Submit.Text = ""
+    Submit.Selectable = false
+    Submit.Parent = GET_KEY
+
+    UICorner_3.CornerRadius = UDim.new(0, 7)
+    UICorner_3.Parent = Submit
+
+    UIStroke_2.Color = Color3.fromRGB(253, 1, 12)
+    UIStroke_2.Transparency = 0.5
+    UIStroke_2.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    UIStroke_2.Parent = Submit
+
+    Title_1.TextWrapped = true
+    Title_1.BorderSizePixel = 0
+    Title_1.TextScaled = true
+    Title_1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Title_1.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    Title_1.Position = UDim2.new(0.5, 0, 0.48, 0)
+    Title_1.Name = "Title"
+    Title_1.AnchorPoint = Vector2.new(0.5, 0.5)
+    Title_1.Size = UDim2.new(1, 0, 0.546, 0)
+    Title_1.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title_1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Title_1.Text = "SUBMIT KEY"
+    Title_1.BackgroundTransparency = 1
+    Title_1.Parent = Submit
+    Title_1:SetAttribute("EngText", Title_1.Text)
+
+    Pfp.BorderSizePixel = 0
+    Pfp.ScaleType = Enum.ScaleType.Fit
+    Pfp.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Pfp.Position = UDim2.new(0.0810142, 0, 0.652851, 0)
+    Pfp.Name = "Pfp"
+    Pfp.Image = "rbxassetid://16165550572"
+    Pfp.Size = UDim2.new(0.229672, 0, 0.261163, 0)
+    Pfp.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Pfp.ZIndex = 2
+    Pfp.BackgroundTransparency = 1
+    Pfp.Parent = GET_KEY
+
+    UICorner_4.CornerRadius = UDim.new(0.075, 0)
+    UICorner_4.Parent = Pfp
+
+    Support.TextWrapped = true
+    Support.ZIndex = 2
+    Support.BorderSizePixel = 0
+    Support.AutoButtonColor = false
+    Support.TextScaled = true
+    Support.BackgroundColor3 = Color3.fromRGB(248, 4, 46)
+    Support.Position = UDim2.new(0.626422, 0, 0.765503, 0)
+    Support.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    Support.Name = "Support"
+    Support.AnchorPoint = Vector2.new(0.5, 0.5)
+    Support.Active = false
+    Support.TextSize = 20
+    Support.Size = UDim2.new(0.58195, 0, 0.0811856, 0)
+    Support.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Support.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Support.Text = ""
+    Support.BackgroundTransparency = 1
+    Support.Selectable = false
+    Support.Parent = GET_KEY
+
+    UICorner_5.CornerRadius = UDim.new(0, 7)
+    UICorner_5.Parent = Support
+
+    UIStroke_3.Color = Color3.fromRGB(253, 1, 12)
+    UIStroke_3.Thickness = 1.25
+    UIStroke_3.Transparency = 0.25
+    UIStroke_3.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    UIStroke_3.Parent = Support
+
+    Title_2.TextWrapped = true
+    Title_2.BorderSizePixel = 0
+    Title_2.TextScaled = true
+    Title_2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Title_2.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
+    Title_2.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Title_2.Name = "Title"
+    Title_2.AnchorPoint = Vector2.new(0.5, 0.5)
+    Title_2.Size = UDim2.new(1, 0, 0.6, 0)
+    Title_2.TextColor3 = Color3.fromRGB(100,149,237)
+    Title_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Title_2.Text = "DISCORD"
+    Title_2.BackgroundTransparency = 1
+    Title_2.Parent = Support
+    Title_2:SetAttribute("EngText", Title_2.Text)
+
+    Credit.TextWrapped = true
+    Credit.BorderSizePixel = 0
+    Credit.RichText = true
+    Credit.TextScaled = true
+    Credit.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Credit.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
+    Credit.Position = UDim2.new(0.627693, 0, 0.67966, 0)
+    Credit.Name = "Credit"
+    Credit.AnchorPoint = Vector2.new(0.5, 0.5)
+    Credit.Size = UDim2.new(0.584491, 0, 0.0536177, 0)
+    Credit.ZIndex = 2
+    Credit.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Credit.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Credit.Text = [[<font color="#f8042e">YT</font> @gtvzmodded-7 | <font color="#5d6af2">DISCORD</font> .gg/SXtfYJSPny]]
+    Credit.BackgroundTransparency = 1
+    Credit.Parent = GET_KEY
+
+    Close.TextWrapped = true
+    Close.ZIndex = 2
+    Close.BorderSizePixel = 0
+    Close.AutoButtonColor = false
+    Close.TextScaled = true
+    Close.BackgroundColor3 = Color3.fromRGB(248, 4, 46)
+    Close.Position = UDim2.new(0.626422, 0, 0.871296, 0)
+    Close.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Bold, Enum.FontStyle.Normal)
+    Close.Name = "Close"
+    Close.AnchorPoint = Vector2.new(0.5, 0.5)
+    Close.Active = false
+    Close.TextSize = 20
+    Close.Size = UDim2.new(0.582, 0, 0.081, 0)
+    Close.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Close.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Close.Text = ""
+    Close.BackgroundTransparency = 1
+    Close.Selectable = false
+    Close.Parent = GET_KEY
+
+    Title_3.TextWrapped = true
+    Title_3.BorderSizePixel = 0
+    Title_3.TextScaled = true
+    Title_3.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Title_3.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
+    Title_3.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Title_3.Name = "Title"
+    Title_3.AnchorPoint = Vector2.new(0.5, 0.5)
+    Title_3.Size = UDim2.new(1, 0, 0.6, 0)
+    Title_3.TextColor3 = Color3.fromRGB(248, 4, 46)
+    Title_3.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Title_3.Text = "CLOSE UI"
+    Title_3.BackgroundTransparency = 1
+    Title_3.Parent = Close
+    Title_3:SetAttribute("EngText", Title_3.Text)
+
+    UIStroke_4.Color = Color3.fromRGB(253, 1, 12)
+    UIStroke_4.Thickness = 1.25
+    UIStroke_4.Transparency = 0.25
+    UIStroke_4.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    UIStroke_4.Parent = Close
+
+    UICorner_6.CornerRadius = UDim.new(0, 7)
+    UICorner_6.Parent = Close
+
+    Frame.BorderSizePixel = 0
+    Frame.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+    Frame.AnchorPoint = Vector2.new(0.5, 0.5)
+    Frame.Size = UDim2.new(0.838618, 0, 0.11308, 0)
+    Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame.Position = UDim2.new(0.50063, 0, 0.308795, 0)
+    Frame.ZIndex = 2
+    Frame.Parent = GET_KEY
+
+    UIStroke_5.Color = Color3.fromRGB(255, 255, 255)
+    UIStroke_5.Thickness = 1.25
+    UIStroke_5.Transparency = 0.5
+    UIStroke_5.Parent = Frame
+
+    UIGradient_2.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.9, 0.995),
+        NumberSequenceKeypoint.new(1, 1)
+    }
+    UIGradient_2.Rotation = -90
+    UIGradient_2.Color = ColorSequence.new(Color3.fromRGB(248, 4, 46))
+    UIGradient_2.Parent = UIStroke_5
+
+    UIStroke_5.Thickness = 2
+
+    UIGradient_3.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 0),
+        NumberSequenceKeypoint.new(0.9, 0.995),
+        NumberSequenceKeypoint.new(1, 1)
+    }
+    UIGradient_3.Rotation = -90
+    UIGradient_3.Parent = UIStroke_6
+
+    UICorner_7.CornerRadius = UDim.new(0, 7)
+
+    Frame_1.TextWrapped = true
+    Frame_1.BorderSizePixel = 0
+    Frame_1.TextScaled = true
+    UICorner_7.Parent = Frame
+    Frame_1.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+    Frame_1.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.SemiBold, Enum.FontStyle.Normal)
+    Frame_1.Position = UDim2.new(0.265781, 0, 0.485383, 0)
+    Frame_1.Name = "Title"
+    Frame_1.AnchorPoint = Vector2.new(0.5, 0.5)
+    Frame_1.Size = UDim2.new(0.393164, 0, 0.523336, 0)
+    Frame_1.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Frame_1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame_1.Text = "ENTER KEY HERE"
+    Frame_1.BackgroundTransparency = 1
+    Frame_1.TextXAlignment = Enum.TextXAlignment.Left
+    Frame_1.Parent = Frame
+    Frame_1:SetAttribute("EngText", Frame_1.Text)
+
+    Frame_2.TextWrapped = true
+    Frame_2.BorderSizePixel = 0
+    Frame_2.Position = UDim2.new(0.780933, 0, 0.498203, 0)
+    Frame_2.TextScaled = true
+    Frame_2.BackgroundColor3 = Color3.fromRGB(24, 24, 24)
+    Frame_2.FontFace = Font.new("rbxasset://fonts/families/SourceSansPro.json", Enum.FontWeight.Regular, Enum.FontStyle.Normal)
+    Frame_2.Active = true
+    Frame_2.AnchorPoint = Vector2.new(0.5, 0.5)
+    Frame_2.PlaceholderText = "..."
+    Frame_2.Size = UDim2.new(0.302255, 0, 0.600259, 0)
+    Frame_2.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Frame_2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Frame_2.Text = ""
+    Frame_2.Selectable = false
+    Frame_2.Name = "Textbox"
+    Frame_2.Parent = Frame
+
+    UIStroke_6.Color = Color3.fromRGB(248, 4, 46)
+    UIStroke_6.Thickness = 1.25
+    UIStroke_6.Transparency = 0.5
+    UIStroke_6.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    UIStroke_6.Parent = Frame_2
+
+    UICorner_8.CornerRadius = UDim.new(0, 7)
+    UICorner_8.Parent = Frame_2
+
+    Gradient_1.BorderSizePixel = 0
+    Gradient_1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Gradient_1.Size = UDim2.new(1, 0, 1, 0)
+    Gradient_1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Gradient_1.Name = "Gradient"
+    Gradient_1.Position = UDim2.new(0, 0, 2.11993e-08, 0)
+    Gradient_1.Parent = GET_KEY
+
+    UIGradient_1.Transparency = NumberSequence.new{
+        NumberSequenceKeypoint.new(0, 0.9),
+        NumberSequenceKeypoint.new(1, 0.9)
+    }
+    UIGradient_1.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(157, 2, 31)),
+        ColorSequenceKeypoint.new(0.468048, Color3.fromRGB(46.7098, 28.0691, 31.4853)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 30, 30))
+    }
+    UIGradient_1.Rotation = -90
+    UIGradient_1.Parent = Gradient_1
+
+    Pattern_1.SliceCenter = Rect.new(0, 256, 0, 256)
+    Pattern_1.ScaleType = Enum.ScaleType.Tile
+    Pattern_1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Pattern_1.ImageTransparency = 0.6
+    Pattern_1.Position = UDim2.new(6.64996e-05, 0, 0.00124399, 0)
+    Pattern_1.Name = "Pattern"
+    Pattern_1.Image = "rbxassetid://2151741365"
+    Pattern_1.TileSize = UDim2.new(0, 250, 0, 250)
+    Pattern_1.Size = UDim2.new(1, 0, 1, 0)
+    Pattern_1.ZIndex = 0
+    Pattern_1.BackgroundTransparency = 1
+    Pattern_1.Parent = Gradient_1
+
+    Gradient_Frame.BorderSizePixel = 0
+    Gradient_Frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Gradient_Frame.Size = UDim2.new(1, 0, 1, 0)
+    Gradient_Frame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Gradient_Frame.Name = "Gradient"
+    Gradient_Frame.Position = UDim2.new(0, 0, 2.11993e-08, 0)
+    Gradient_Frame.ZIndex = 0
+    Gradient_Frame.BackgroundTransparency = 1
+    Gradient_Frame.Parent = Frame
+
+    UIGradient_4.Color = ColorSequence.new{
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(109, 1, 23)),
+        ColorSequenceKeypoint.new(0.531952, Color3.fromRGB(39.5556, 18.9764, 22.7252)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(24, 18, 19))
+    }
+    UIGradient_4.Rotation = -90
+    UIGradient_4.Parent = Gradient_Frame
+
+    UICorner_9.CornerRadius = UDim.new(0, 10)
+    UICorner_9.Parent = Gradient_Frame
+
+    GET_KEY.Visible = false
+    INTRO.GroupTransparency = 1
+    GET_KEY.GroupTransparency = 1
+
+    local function EnterKey(v)
+        local textbox = v["Textbox"]
+        local gradient = v.Gradient
+        local stroke = v.UIStroke
+
+        local tween_1_in = TweenService:Create(gradient, INFO_DOT25_QUAD, {BackgroundTransparency = 0})
+        local tween_2_in = TweenService:Create(stroke.UIGradient, INFO_DOT25_QUAD, {Offset = Vector2.new(0, -0.5)})
+
+        local tween_1_out = TweenService:Create(gradient, INFO_DOT25_QUAD, {BackgroundTransparency = 1})
+        local tween_2_out = TweenService:Create(stroke.UIGradient, INFO_DOT25_QUAD, {Offset = Vector2.new(0, 0)})
+
+        textbox.Focused:Connect(function()
+            tween_1_in:Play()
+            tween_2_in:Play()
         end)
 
-        Notification(
-            "CHAVE 🔑",
-            "Link copiado para a área de transferência.",
-            3
-        )
-    else
-        Notification(
-            "CHAVE 🔑",
-            "Copie o link manualmente: " .. link,
-            5
-        )
-    end
-end)
-
---==================================================
--- BOTÃO VALIDAR
---==================================================
-
-local Submit = Instance.new("TextButton")
-Submit.Name = "Submit"
-Submit.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Submit.Position = UDim2.new(0, 206, 0, 112)
-Submit.Size = UDim2.new(0, 98, 0, 38)
-Submit.Font = Enum.Font.GothamBold
-Submit.Text = "CHECAR CHAVE"
-Submit.TextColor3 = Color3.fromRGB(0, 255, 0)
-Submit.TextSize = 11
-Submit.Parent = Main
-
-local SubmitCorner = Instance.new("UICorner")
-SubmitCorner.CornerRadius = UDim.new(0, 5)
-SubmitCorner.Parent = Submit
-
-local SubmitStroke = Instance.new("UIStroke")
-SubmitStroke.Color = Color3.fromRGB(0, 255, 0)
-SubmitStroke.Parent = Submit
-
-Submit.MouseButton1Click:Connect(function()
-    local inputKey = KeyBox.Text
-
-    if IsKeyValid(inputKey) then
-        SaveKey(inputKey)
-
-        Notification(
-            "Key System",
-            "CHAVE VÁLIDA! Salva com sucesso.",
-            3
-        )
-
-        task.wait(2)
-
-        ScreenGui:Destroy()
-
-        -- Coloque aqui somente uma função legítima
-        -- do seu próprio projeto, se necessário.
-
-    else
-        Notification(
-            "CHAVE 🔑",
-            "CHAVE INVÁLIDA!",
-            4
-        )
-    end
-end)
-
---==================================================
--- DISCORD
---==================================================
-
-local Discord = Instance.new("TextButton")
-Discord.Name = "Discord"
-Discord.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-Discord.Position = UDim2.new(0, 119, 0, 158)
-Discord.Size = UDim2.new(0, 166, 0, 31)
-Discord.Font = Enum.Font.GothamBold
-Discord.Text = "DISCORD"
-Discord.TextColor3 = Color3.fromRGB(0, 255, 0)
-Discord.TextSize = 13
-Discord.Parent = Main
-
-local DiscordCorner = Instance.new("UICorner")
-DiscordCorner.CornerRadius = UDim.new(0, 5)
-DiscordCorner.Parent = Discord
-
-local DiscordStroke = Instance.new("UIStroke")
-DiscordStroke.Color = Color3.fromRGB(0, 255, 0)
-DiscordStroke.Parent = Discord
-
-Discord.MouseButton1Click:Connect(function()
-    local link = "https://discord.com/invite/Cg4fDkn6un"
-
-    if setclipboard then
-        pcall(function()
-            setclipboard(link)
+        textbox.FocusLost:Connect(function()
+            tween_1_out:Play()
+            tween_2_out:Play()
         end)
-
-        Notification(
-            "DISCORD",
-            "Link do Discord copiado!",
-            4
-        )
-    else
-        Notification(
-            "DISCORD",
-            "Link: " .. link,
-            5
-        )
     end
-end)
 
---==================================================
--- CARREGAR CHAVE SALVA
---==================================================
+    EnterKey(Frame)
 
-local savedKey = LoadSavedKey()
+    for i, v in pairs({Get, Submit, Close, Support}) do
+        if v == Get or v == Submit then
+            v.MouseEnter:Connect(function()
+                TweenService:Create(v.Hover, INFO_DOT25_QUAD, {ImageTransparency = 0.25}):Play()
+            end)
+            v.MouseLeave:Connect(function()
+                TweenService:Create(v.Hover, INFO_DOT25_QUAD, {ImageTransparency = 1}):Play()
+            end)
+        else
+            v.MouseEnter:Connect(function()
+                TweenService:Create(v, INFO_DOT25_QUAD, {BackgroundTransparency = 0.1}):Play()
+                TweenService:Create(v["Title"], INFO_DOT25_QUAD, {TextColor3 = Color3.fromRGB(255, 255, 255)}):Play()
+            end)
+            v.MouseLeave:Connect(function()
+                TweenService:Create(v, INFO_DOT25_QUAD, {BackgroundTransparency = 1}):Play()
+                TweenService:Create(v["Title"], INFO_DOT25_QUAD, {TextColor3 = Color3.fromRGB(248, 4, 46)}):Play()
+            end)
+        end
+    end
 
-if savedKey and IsKeyValid(savedKey) then
-    Notification(
-        "Key System",
-        "KEY VÁLIDA ENCONTRADA!",
-        4
-    )
+    local preload_content = {}
+    for i, v in pairs(HOHO_Passcheck:GetDescendants()) do
+        table.insert(preload_content, v)
+    end
+    for i, v in pairs(PreloadID) do
+        table.insert(preload_content, v)
+    end
 
-    task.wait(2)
+    ContentProvider:PreloadAsync(preload_content)
 
-    ScreenGui:Destroy()
+    Content.Size = UDim2.new(0, 0, 1, 0)
 
-    -- Chave válida.
-    -- O carregamento de código externo foi removido.
+    TweenService:Create(INTRO, INFO_DOT25_QUAD, {GroupTransparency = 0}):Play()
+    task.wait(0.5)
+    for i = 1, #preload_content do
+        local progress = i / #preload_content
+        TweenService:Create(Content, TweenInfo.new(0.1, Enum.EasingStyle.Quad), {Size = UDim2.new(progress, 0, 1, 0)}):Play()
+        task.wait(math.random(1, 5) / 50)
+    end
+
+    TweenService:Create(INTRO, INFO_DOT25_QUAD, {GroupTransparency = 1}):Play()
+    task.wait(0.5)
+
+    GET_KEY.Visible = true
+    TweenService:Create(GET_KEY, INFO_DOT25_QUAD, {GroupTransparency = 0}):Play()
+
+    local function destroyUI()
+        HOHO_Passcheck:Destroy()
+    end
+
+    local function do_check_key(key)
+        print("Key submitted:", key)
+        
+        if key == SECRET_KEY then
+            saveKey(key)
+            TweenService:Create(GET_KEY, INFO_DOT25_QUAD, {GroupTransparency = 1}):Play()
+            delay(0.2, function()
+                destroyUI()
+                loadstring(game:HttpGet('URL SCRIPT'))()
+            end)
+        else
+            print("Invalid key")
+            Frame_2.Text = ""
+            Frame_2.PlaceholderText = "Invalid Key!"
+            task.wait(1)
+            Frame_2.PlaceholderText = "..."
+        end
+    end
+    
+    local function ABCXYZ()
+        local key = Frame.Textbox.Text
+        do_check_key(key)
+    end
+    
+    Submit.MouseButton1Click:Connect(ABCXYZ)
+
+    Support.MouseButton1Click:Connect(function()
+        setclipboard(DISCORD_LINK)
+    end)
+
+    Close.MouseButton1Click:Once(function()
+        TweenService:Create(GET_KEY, INFO_DOT25_QUAD, {GroupTransparency = 1}):Play()
+        delay(0.2, destroyUI)
+    end)
+
+    Get.MouseButton1Click:Connect(function()
+        setclipboard(GET_LINK)
+    end)
+    
+    local savedKey = loadSavedKey()
+    if savedKey and savedKey == SECRET_KEY then
+        Frame.Textbox.Text = savedKey
+        do_check_key(savedKey)
+    end
 end
-```
