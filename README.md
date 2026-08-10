@@ -39,7 +39,6 @@ local HubConfig = {
 -- Sistema de Notificações
 -- ========================================
 local NotificationSystem = {}
-NotificationSystem.__index = NotificationSystem
 
 function NotificationSystem:Create(title, message, duration, type)
     duration = duration or 3
@@ -67,13 +66,6 @@ function NotificationSystem:Create(title, message, duration, type)
     local borderCorner = Instance.new("UICorner")
     borderCorner.CornerRadius = UDim.new(0, 6)
     borderCorner.Parent = border
-    
-    local glow = Instance.new("Frame")
-    glow.BackgroundColor3 = HubConfig.Theme.Primary
-    glow.BackgroundTransparency = 0.8
-    glow.BorderSizePixel = 0
-    glow.Size = UDim2.new(0, 4, 1, 0)
-    glow.Parent = notificationFrame
     
     local titleLabel = Instance.new("TextLabel")
     titleLabel.BackgroundTransparency = 1
@@ -106,20 +98,17 @@ function NotificationSystem:Create(title, message, duration, type)
     
     notificationFrame.Parent = GuiService
     
-    -- Animar entrada
     notificationFrame.Visible = true
     notificationFrame.Position = UDim2.new(1, 0, 0, 80)
     TweenService:Create(notificationFrame, TweenInfo.new(0.4, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Position = UDim2.new(1, -350, 0, 80)
     }):Play()
     
-    -- Barra de progresso
     local progressTween = TweenService:Create(progressBar, TweenInfo.new(duration, Enum.EasingStyle.Linear), {
         Size = UDim2.new(0, 0, 0, 2)
     })
     progressTween:Play()
     
-    -- Remover após duração
     task.spawn(function()
         task.wait(duration + 0.2)
         TweenService:Create(notificationFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
@@ -182,39 +171,6 @@ function Settings:Load()
     end
     
     NotificationSystem:Create("Config Carregada", "Configuração carregada com sucesso!", 3, "success")
-end
-
--- ========================================
--- Sistema de Keybinds
--- ========================================
-local KeybindSystem = {}
-KeybindSystem.__index = KeybindSystem
-
-function KeybindSystem:Register(name, defaultKey, callback)
-    local keybind = defaultKey or Enum.KeyCode.None
-    local listening = false
-    
-    local function onInputBegan(input, gameProcessed)
-        if gameProcessed then return end
-        if not listening and input.KeyCode == keybind then
-            callback()
-        end
-    end
-    
-    UserInputService.InputBegan:Connect(onInputBegan)
-    
-    return {
-        SetKey = function(newKey)
-            keybind = newKey
-        end,
-        StartListening = function()
-            listening = true
-            NotificationSystem:Create("Keybind", "Pressione uma tecla para definir...", 3, "info")
-        end,
-        StopListening = function()
-            listening = false
-        end
-    }
 end
 
 -- ========================================
@@ -534,10 +490,6 @@ LoadingScreen.BackgroundTransparency = 0
 LoadingScreen.BorderSizePixel = 0
 LoadingScreen.Parent = ScreenGui
 
-local LoadingCorner = Instance.new("UICorner")
-LoadingCorner.CornerRadius = UDim.new(0, 0)
-LoadingCorner.Parent = LoadingScreen
-
 local LoadingLogo = Instance.new("TextLabel")
 LoadingLogo.Size = UDim2.new(0, 300, 0, 60)
 LoadingLogo.Position = UDim2.new(0.5, -150, 0.5, -80)
@@ -546,7 +498,6 @@ LoadingLogo.Font = Enum.Font.GothamBold
 LoadingLogo.Text = "NEBULA HUB"
 LoadingLogo.TextColor3 = HubConfig.Theme.Primary
 LoadingLogo.TextSize = 48
-LoadingLogo.TextScaled = false
 LoadingLogo.Parent = LoadingScreen
 
 local LoadingSubtitle = Instance.new("TextLabel")
@@ -581,7 +532,6 @@ local LoadingProgressCorner = Instance.new("UICorner")
 LoadingProgressCorner.CornerRadius = UDim.new(0, 2)
 LoadingProgressCorner.Parent = LoadingProgress
 
--- Animar loading
 task.spawn(function()
     local progress = 0
     while progress < 1 do
@@ -606,7 +556,6 @@ task.spawn(function()
     LoadingScreen.Visible = false
     LoadingScreen:Destroy()
     MainFrame.Visible = true
-    -- Animação de entrada do main frame
     MainFrame.Position = UDim2.new(0.5, -450, 0.5, -250)
     MainFrame.BackgroundTransparency = 1
     TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
@@ -632,7 +581,6 @@ local MainCorner = Instance.new("UICorner")
 MainCorner.CornerRadius = UDim.new(0, 16)
 MainCorner.Parent = MainFrame
 
--- Sombra
 local Shadow = Instance.new("Frame")
 Shadow.Name = "Shadow"
 Shadow.Size = UDim2.new(1, 20, 1, 20)
@@ -809,9 +757,38 @@ ContentCorner.Parent = ContentArea
 -- Painéis de conteúdo por aba
 local ContentPanels = {}
 
--- Função para criar um toggle animado
+-- Funções para criar elementos da UI
 function CreateToggle(parent, label, defaultValue, callback)
     local frame = Instance.new("Frame")
     frame.Size = UDim2.new(1, -20, 0, 40)
     frame.BackgroundTransparency = 1
-   
+    frame.Parent = parent
+    
+    local labelText = Instance.new("TextLabel")
+    labelText.Size = UDim2.new(0.7, 0, 1, 0)
+    labelText.BackgroundTransparency = 1
+    labelText.Font = Enum.Font.Gotham
+    labelText.Text = label
+    labelText.TextColor3 = HubConfig.Theme.Text
+    labelText.TextSize = 13
+    labelText.TextXAlignment = Enum.TextXAlignment.Left
+    labelText.Parent = frame
+    
+    local toggleButton = Instance.new("Frame")
+    toggleButton.Size = UDim2.new(0, 50, 0, 26)
+    toggleButton.Position = UDim2.new(1, -60, 0.5, -13)
+    toggleButton.BackgroundColor3 = defaultValue and HubConfig.Theme.ToggleOn or HubConfig.Theme.ToggleOff
+    toggleButton.BackgroundTransparency = 0.3
+    toggleButton.BorderSizePixel = 0
+    toggleButton.Parent = frame
+    
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0, 13)
+    toggleCorner.Parent = toggleButton
+    
+    local toggleCircle = Instance.new("Frame")
+    toggleCircle.Size = UDim2.new(0, 20, 0, 20)
+    toggleCircle.Position = defaultValue and UDim2.new(1, -24, 0.5, -10) or UDim2.new(0, 4, 0.5, -10)
+    toggleCircle.BackgroundColor3 = HubConfig.Theme.Text
+    toggleCircle.BackgroundTransparency = 0.2
+    toggleCircle.Border
