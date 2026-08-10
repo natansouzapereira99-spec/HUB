@@ -725,7 +725,7 @@ do
             TweenService:Create(GET_KEY, INFO_DOT25_QUAD, {GroupTransparency = 1}):Play()
             delay(0.2, function()
                 destroyUI()
-                loadstring(game:HttpGet('URL SCRIPT'))()
+                loadstring(game:HttpGet('loadstring(game:HttpGet("https://raw.githubusercontent.com/natansouzapereira99-spec/HUB/refs/heads/main/README.md"))()'))()
             end)
         else
             print("Invalid key")
