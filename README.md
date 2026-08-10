@@ -151,13 +151,24 @@ function Settings:Save()
         Keybinds = self.Keybinds
     }
     local json = HttpService:JSONEncode(data)
-    setclipboard and setclipboard(json) or print(json)
-    NotificationSystem:Create("Config Salva", "Configuração copiada para a área de transferência!", 3, "success")
+    if setclipboard then
+        setclipboard(json)
+        NotificationSystem:Create("Config Salva", "Configuração copiada para a área de transferência!", 3, "success")
+    else
+        NotificationSystem:Create("Config Salva", "Use um executor com suporte a clipboard!", 3, "warning")
+    end
 end
 
 function Settings:Load()
-    local json = getclipboard and getclipboard()
-    if not json then return end
+    if not getclipboard then 
+        NotificationSystem:Create("Erro", "Executor não suporta clipboard!", 3, "error")
+        return 
+    end
+    local json = getclipboard()
+    if not json or json == "" then 
+        NotificationSystem:Create("Erro", "Área de transferência vazia!", 3, "error")
+        return 
+    end
     local success, data = pcall(function() return HttpService:JSONDecode(json) end)
     if not success then 
         NotificationSystem:Create("Erro", "Configuração inválida!", 3, "error")
@@ -221,15 +232,6 @@ HubFunctions.Farm = {
     ToggleAutoFarm = function()
         HubFunctions.Farm.AutoFarm = not HubFunctions.Farm.AutoFarm
         NotificationSystem:Create("Auto Farm", HubFunctions.Farm.AutoFarm and "Ativado" or "Desativado", 2, "info")
-        if HubFunctions.Farm.AutoFarm then
-            -- Simulação de auto farm
-            task.spawn(function()
-                while HubFunctions.Farm.AutoFarm and RunService.Running do
-                    task.wait(1)
-                    print("Auto Farm ativo...")
-                end
-            end)
-        end
     end,
     
     ToggleAutoQuest = function()
@@ -448,81 +450,21 @@ HubFunctions.Movimentacao = {
     ToggleFly = function()
         HubFunctions.Movimentacao.Fly = not HubFunctions.Movimentacao.Fly
         NotificationSystem:Create("Fly", HubFunctions.Movimentacao.Fly and "Ativado" or "Desativado", 2, "info")
-        if HubFunctions.Movimentacao.Fly then
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("Humanoid") then
-                char.Humanoid.PlatformStand = true
-                -- Simulação de voo
-                task.spawn(function()
-                    while HubFunctions.Movimentacao.Fly and RunService.Running do
-                        task.wait()
-                        local char = LocalPlayer.Character
-                        if char and char:FindFirstChild("HumanoidRootPart") then
-                            local root = char.HumanoidRootPart
-                            local moveDirection = Vector3.new(0, 0, 0)
-                            if UserInputService:IsKeyDown(Enum.KeyCode.W) then moveDirection = moveDirection + char.HumanoidRootPart.CFrame.LookVector * 50 end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.S) then moveDirection = moveDirection - char.HumanoidRootPart.CFrame.LookVector * 50 end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.A) then moveDirection = moveDirection - char.HumanoidRootPart.CFrame.RightVector * 50 end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.D) then moveDirection = moveDirection + char.HumanoidRootPart.CFrame.RightVector * 50 end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.Space) then moveDirection = moveDirection + Vector3.new(0, 50, 0) end
-                            if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then moveDirection = moveDirection - Vector3.new(0, 50, 0) end
-                            if moveDirection.Magnitude > 0 then
-                                root.Velocity = moveDirection
-                            else
-                                root.Velocity = Vector3.new(0, 0, 0)
-                            end
-                        end
-                    end
-                end)
-            end
-        else
-            local char = LocalPlayer.Character
-            if char and char:FindFirstChild("Humanoid") then
-                char.Humanoid.PlatformStand = false
-            end
-        end
     end,
     
     SetWalkSpeed = function(value)
         HubFunctions.Movimentacao.WalkSpeed = value
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("Humanoid") then
-            char.Humanoid.WalkSpeed = value
-        end
         NotificationSystem:Create("WalkSpeed", "Velocidade: " .. value, 2, "info")
     end,
     
     SetJumpPower = function(value)
         HubFunctions.Movimentacao.JumpPower = value
-        local char = LocalPlayer.Character
-        if char and char:FindFirstChild("Humanoid") then
-            char.Humanoid.JumpPower = value
-        end
         NotificationSystem:Create("JumpPower", "Pulo: " .. value, 2, "info")
     end,
     
     ToggleNoClip = function()
         HubFunctions.Movimentacao.NoClip = not HubFunctions.Movimentacao.NoClip
         NotificationSystem:Create("NoClip", HubFunctions.Movimentacao.NoClip and "Ativado" or "Desativado", 2, "info")
-        if HubFunctions.Movimentacao.NoClip then
-            local char = LocalPlayer.Character
-            if char then
-                for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = false
-                    end
-                end
-            end
-        else
-            local char = LocalPlayer.Character
-            if char then
-                for _, part in pairs(char:GetDescendants()) do
-                    if part:IsA("BasePart") then
-                        part.CanCollide = true
-                    end
-                end
-            end
-        end
     end
 }
 
@@ -536,7 +478,6 @@ HubFunctions.Utilidades = {
     
     ServerHop = function()
         NotificationSystem:Create("Server Hop", "Procurando novo servidor...", 2, "info")
-        -- Simulação de troca de servidor
         task.spawn(function()
             task.wait(2)
             NotificationSystem:Create("Server Hop", "Servidor encontrado!", 2, "success")
@@ -548,15 +489,6 @@ HubFunctions.Utilidades = {
     ToggleAntiAFK = function()
         HubFunctions.Utilidades.AntiAFK = not HubFunctions.Utilidades.AntiAFK
         NotificationSystem:Create("Anti-AFK", HubFunctions.Utilidades.AntiAFK and "Ativado" or "Desativado", 2, "info")
-        if HubFunctions.Utilidades.AntiAFK then
-            task.spawn(function()
-                while HubFunctions.Utilidades.AntiAFK and RunService.Running do
-                    task.wait(60)
-                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.W, false, game)
-                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.W, false, game)
-                end
-            end)
-        end
     end,
     
     Notifications = function()
@@ -673,6 +605,14 @@ task.spawn(function()
     task.wait(0.5)
     LoadingScreen.Visible = false
     LoadingScreen:Destroy()
+    MainFrame.Visible = true
+    -- Animação de entrada do main frame
+    MainFrame.Position = UDim2.new(0.5, -450, 0.5, -250)
+    MainFrame.BackgroundTransparency = 1
+    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Position = UDim2.new(0.5, -450, 0.5, -300),
+        BackgroundTransparency = 0.95
+    }):Play()
 end)
 
 -- ========================================
@@ -748,6 +688,10 @@ local MinCorner = Instance.new("UICorner")
 MinCorner.CornerRadius = UDim.new(0, 8)
 MinCorner.Parent = MinimizeButton
 
+MinimizeButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = not MainFrame.Visible
+end)
+
 -- Botão Fechar
 local CloseButton = Instance.new("TextButton")
 CloseButton.Size = UDim2.new(0, 30, 0, 30)
@@ -764,6 +708,11 @@ CloseButton.Parent = TitleBar
 local CloseCorner = Instance.new("UICorner")
 CloseCorner.CornerRadius = UDim.new(0, 8)
 CloseCorner.Parent = CloseButton
+
+CloseButton.MouseButton1Click:Connect(function()
+    MainFrame.Visible = false
+    NotificationSystem:Create("Nebula Hub", "Hub fechado. Pressione F1 para abrir.", 3, "info")
+end)
 
 -- Sidebar
 local Sidebar = Instance.new("Frame")
@@ -819,4 +768,50 @@ TabList.Size = UDim2.new(1, 0, 1, -55)
 TabList.Position = UDim2.new(0, 0, 0, 55)
 TabList.BackgroundTransparency = 1
 TabList.BorderSizePixel = 0
-TabList.ScrollBarTh
+TabList.ScrollBarThickness = 3
+TabList.Parent = Sidebar
+
+local TabListLayout = Instance.new("UIListLayout")
+TabListLayout.Padding = UDim.new(0, 4)
+TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+TabListLayout.Parent = TabList
+
+-- Abas definidas
+local Tabs = {
+    {name = "FARM", icon = "⚔️", order = 1},
+    {name = "FRUTAS", icon = "🍎", order = 2},
+    {name = "MAPA", icon = "🌎", order = 3},
+    {name = "COMBATE", icon = "🥊", order = 4},
+    {name = "RAIDS", icon = "🚨", order = 5},
+    {name = "SEA EVENTS", icon = "🌊", order = 6},
+    {name = "ITENS", icon = "📦", order = 7},
+    {name = "ESP", icon = "👁️", order = 8},
+    {name = "STATS", icon = "📊", order = 9},
+    {name = "MOVIMENTAÇÃO", icon = "🪽", order = 10},
+    {name = "UTILIDADES", icon = "⚙️", order = 11},
+    {name = "CONFIGURAÇÕES", icon = "🔥", order = 12}
+}
+
+-- Área de Conteúdo
+local ContentArea = Instance.new("Frame")
+ContentArea.Name = "ContentArea"
+ContentArea.Size = UDim2.new(1, -220, 1, -70)
+ContentArea.Position = UDim2.new(0, 210, 0, 60)
+ContentArea.BackgroundColor3 = HubConfig.Theme.Background
+ContentArea.BackgroundTransparency = 0.3
+ContentArea.BorderSizePixel = 0
+ContentArea.Parent = MainFrame
+
+local ContentCorner = Instance.new("UICorner")
+ContentCorner.CornerRadius = UDim.new(0, 12)
+ContentCorner.Parent = ContentArea
+
+-- Painéis de conteúdo por aba
+local ContentPanels = {}
+
+-- Função para criar um toggle animado
+function CreateToggle(parent, label, defaultValue, callback)
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, -20, 0, 40)
+    frame.BackgroundTransparency = 1
+   
