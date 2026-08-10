@@ -1,6 +1,6 @@
 --[[
-    Nebula Hub - Script Completo
-    Desenvolvido para Roblox Studio
+    Nebula Hub - Blox Fruits
+    Script Completo para Roblox
     Versão: 1.0.0
 ]]
 
@@ -11,6 +11,7 @@ local UserInputService = game:GetService("UserInputService")
 local VirtualInputManager = game:GetService("VirtualInputManager")
 local HttpService = game:GetService("HttpService")
 local GuiService = game:GetService("GuiService")
+local Workspace = game:GetService("Workspace")
 local LocalPlayer = Players.LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 
@@ -40,9 +41,8 @@ local HubConfig = {
 -- ========================================
 local NotificationSystem = {}
 
-function NotificationSystem:Create(title, message, duration, type)
+function NotificationSystem:Create(title, message, duration)
     duration = duration or 3
-    type = type or "info"
     
     local notificationFrame = Instance.new("Frame")
     notificationFrame.BackgroundColor3 = HubConfig.Theme.Background
@@ -142,25 +142,25 @@ function Settings:Save()
     local json = HttpService:JSONEncode(data)
     if setclipboard then
         setclipboard(json)
-        NotificationSystem:Create("Config Salva", "Configuração copiada para a área de transferência!", 3, "success")
+        NotificationSystem:Create("Config Salva", "Configuração copiada para a área de transferência!", 3)
     else
-        NotificationSystem:Create("Config Salva", "Use um executor com suporte a clipboard!", 3, "warning")
+        NotificationSystem:Create("Config Salva", "Use um executor com suporte a clipboard!", 3)
     end
 end
 
 function Settings:Load()
     if not getclipboard then 
-        NotificationSystem:Create("Erro", "Executor não suporta clipboard!", 3, "error")
+        NotificationSystem:Create("Erro", "Executor não suporta clipboard!", 3)
         return 
     end
     local json = getclipboard()
     if not json or json == "" then 
-        NotificationSystem:Create("Erro", "Área de transferência vazia!", 3, "error")
+        NotificationSystem:Create("Erro", "Área de transferência vazia!", 3)
         return 
     end
     local success, data = pcall(function() return HttpService:JSONDecode(json) end)
     if not success then 
-        NotificationSystem:Create("Erro", "Configuração inválida!", 3, "error")
+        NotificationSystem:Create("Erro", "Configuração inválida!", 3)
         return 
     end
     
@@ -170,7 +170,55 @@ function Settings:Load()
         end
     end
     
-    NotificationSystem:Create("Config Carregada", "Configuração carregada com sucesso!", 3, "success")
+    NotificationSystem:Create("Config Carregada", "Configuração carregada com sucesso!", 3)
+end
+
+-- ========================================
+-- Funções do Blox Fruits
+-- ========================================
+local BloxFruits = {}
+
+-- Funções para encontrar objetos no jogo
+function BloxFruits:FindNPCs()
+    local npcs = {}
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj:FindFirstChild("Humanoid") and obj:FindFirstChild("Head") then
+            if obj.Name:find("NPC") or obj.Name:find("Boss") then
+                table.insert(npcs, obj)
+            end
+        end
+    end
+    return npcs
+end
+
+function BloxFruits:FindIslands()
+    local islands = {}
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("Model") and (obj.Name:find("Island") or obj.Name:find("Isla")) then
+            table.insert(islands, obj)
+        end
+    end
+    return islands
+end
+
+function BloxFruits:FindFruits()
+    local fruits = {}
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and obj.Name:find("Fruit") then
+            table.insert(fruits, obj)
+        end
+    end
+    return fruits
+end
+
+function BloxFruits:FindChests()
+    local chests = {}
+    for _, obj in pairs(Workspace:GetDescendants()) do
+        if obj:IsA("BasePart") and (obj.Name:find("Chest") or obj.Name:find("Caixa")) then
+            table.insert(chests, obj)
+        end
+    end
+    return chests
 end
 
 -- ========================================
@@ -184,26 +232,106 @@ HubFunctions.Farm = {
     AutoQuest = false,
     AutoLevel = false,
     BossFarm = false,
+    FarmLoop = nil,
     
     ToggleAutoFarm = function()
         HubFunctions.Farm.AutoFarm = not HubFunctions.Farm.AutoFarm
-        NotificationSystem:Create("Auto Farm", HubFunctions.Farm.AutoFarm and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Auto Farm", HubFunctions.Farm.AutoFarm and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Farm.AutoFarm then
+            HubFunctions.Farm.FarmLoop = RunService.Heartbeat:Connect(function()
+                local char = LocalPlayer.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                local humanoid = char:FindFirstChild("Humanoid")
+                if not hrp or not humanoid then return end
+                
+                -- Encontra o NPC mais próximo
+                local npcs = BloxFruits:FindNPCs()
+                local closest = nil
+                local closestDist = math.huge
+                
+                for _, npc in pairs(npcs) do
+                    local npcHrp = npc:FindFirstChild("HumanoidRootPart")
+                    if npcHrp then
+                        local dist = (hrp.Position - npcHrp.Position).Magnitude
+                        if dist < closestDist then
+                            closestDist = dist
+                            closest = npc
+                        end
+                    end
+                end
+                
+                if closest then
+                    local npcHrp = closest:FindFirstChild("HumanoidRootPart")
+                    if npcHrp then
+                        -- Move em direção ao NPC
+                        hrp.CFrame = CFrame.new(hrp.Position, npcHrp.Position)
+                        
+                        -- Ataca se estiver perto
+                        if closestDist < 10 then
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+                            task.wait(0.1)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+                        end
+                    end
+                end
+            end)
+        else
+            if HubFunctions.Farm.FarmLoop then
+                HubFunctions.Farm.FarmLoop:Disconnect()
+                HubFunctions.Farm.FarmLoop = nil
+            end
+        end
     end,
     
     ToggleAutoQuest = function()
         HubFunctions.Farm.AutoQuest = not HubFunctions.Farm.AutoQuest
-        NotificationSystem:Create("Auto Quest", HubFunctions.Farm.AutoQuest and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Auto Quest", HubFunctions.Farm.AutoQuest and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Farm.AutoQuest then
+            -- Procura por NPC de quest
+            task.spawn(function()
+                while HubFunctions.Farm.AutoQuest and RunService.Running do
+                    task.wait(1)
+                    local npcs = BloxFruits:FindNPCs()
+                    for _, npc in pairs(npcs) do
+                        if npc.Name:find("Quest") or npc.Name:find("Mission") then
+                            -- Simula clique no NPC
+                            NotificationSystem:Create("Auto Quest", "Interagindo com " .. npc.Name, 2)
+                            break
+                        end
+                    end
+                end
+            end)
+        end
     end,
     
     ToggleAutoLevel = function()
         HubFunctions.Farm.AutoLevel = not HubFunctions.Farm.AutoLevel
-        NotificationSystem:Create("Auto Level", HubFunctions.Farm.AutoLevel and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Auto Level", HubFunctions.Farm.AutoLevel and "Ativado" or "Desativado", 2)
     end,
     
     ToggleBossFarm = function()
         HubFunctions.Farm.BossFarm = not HubFunctions.Farm.BossFarm
-        NotificationSystem:Create("Boss Farm", HubFunctions.Farm.BossFarm and "Ativado" or "Desativado", 2, "info")
-    end
+        NotificationSystem:Create("Boss Farm", HubFunctions.Farm.BossFarm and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Farm.BossFarm then
+            task.spawn(function()
+                while HubFunctions.Farm.BossFarm and RunService.Running do
+                    task.wait(1)
+                    -- Encontra bosses
+                    local npcs = BloxFruits:FindNPCs()
+                    for _, npc in pairs(npcs) do
+                        if npc.Name:find("Boss") then
+                            NotificationSystem:Create("Boss Farm", "Atacando " .. npc.Name, 2)
+                            break
+                        end
+                    end
+                end
+            end)
+        end
+    }
 }
 
 -- Funções Frutas
@@ -212,37 +340,178 @@ HubFunctions.Frutas = {
     FruitESP = false,
     FruitAlert = false,
     AutoCollect = false,
+    FruitLoop = nil,
     
     ToggleFruitFinder = function()
         HubFunctions.Frutas.FruitFinder = not HubFunctions.Frutas.FruitFinder
-        NotificationSystem:Create("Fruit Finder", HubFunctions.Frutas.FruitFinder and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Fruit Finder", HubFunctions.Frutas.FruitFinder and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Frutas.FruitFinder then
+            HubFunctions.Frutas.FruitLoop = RunService.Heartbeat:Connect(function()
+                local fruits = BloxFruits:FindFruits()
+                for _, fruit in pairs(fruits) do
+                    -- Cria indicador visual
+                    local highlight = Instance.new("Highlight")
+                    highlight.Parent = fruit
+                    highlight.FillColor = HubConfig.Theme.Primary
+                    highlight.FillTransparency = 0.5
+                    highlight.OutlineColor = HubConfig.Theme.Primary
+                    highlight.OutlineTransparency = 0.8
+                    task.wait(0.1)
+                end
+            end)
+        else
+            if HubFunctions.Frutas.FruitLoop then
+                HubFunctions.Frutas.FruitLoop:Disconnect()
+                HubFunctions.Frutas.FruitLoop = nil
+            end
+            -- Remove highlights
+            for _, fruit in pairs(BloxFruits:FindFruits()) do
+                local highlight = fruit:FindFirstChildOfClass("Highlight")
+                if highlight then highlight:Destroy() end
+            end
+        end
     end,
     
     ToggleFruitESP = function()
         HubFunctions.Frutas.FruitESP = not HubFunctions.Frutas.FruitESP
-        NotificationSystem:Create("Fruit ESP", HubFunctions.Frutas.FruitESP and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Fruit ESP", HubFunctions.Frutas.FruitESP and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Frutas.FruitESP then
+            -- Criar ESP para frutas
+            task.spawn(function()
+                while HubFunctions.Frutas.FruitESP and RunService.Running do
+                    local fruits = BloxFruits:FindFruits()
+                    for _, fruit in pairs(fruits) do
+                        local highlight = fruit:FindFirstChildOfClass("Highlight")
+                        if not highlight then
+                            highlight = Instance.new("Highlight")
+                            highlight.Parent = fruit
+                            highlight.FillColor = HubConfig.Theme.Secondary
+                            highlight.FillTransparency = 0.3
+                            highlight.OutlineColor = HubConfig.Theme.Secondary
+                            highlight.OutlineTransparency = 0.5
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+        else
+            for _, fruit in pairs(BloxFruits:FindFruits()) do
+                local highlight = fruit:FindFirstChildOfClass("Highlight")
+                if highlight then highlight:Destroy() end
+            end
+        end
     end,
     
     ToggleFruitAlert = function()
         HubFunctions.Frutas.FruitAlert = not HubFunctions.Frutas.FruitAlert
-        NotificationSystem:Create("Aviso de Fruta", HubFunctions.Frutas.FruitAlert and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Aviso de Fruta", HubFunctions.Frutas.FruitAlert and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Frutas.FruitAlert then
+            task.spawn(function()
+                while HubFunctions.Frutas.FruitAlert and RunService.Running do
+                    local fruits = BloxFruits:FindFruits()
+                    if #fruits > 0 then
+                        NotificationSystem:Create("FRUTA ENCONTRADA!", "Fruta detectada no mapa!", 3)
+                        for _, fruit in pairs(fruits) do
+                            local highlight = Instance.new("Highlight")
+                            highlight.Parent = fruit
+                            highlight.FillColor = Color3.fromRGB(255, 0, 0)
+                            highlight.FillTransparency = 0.2
+                            highlight.OutlineColor = Color3.fromRGB(255, 0, 0)
+                            highlight.OutlineTransparency = 0.3
+                        end
+                    end
+                    task.wait(5)
+                end
+            end)
+        end
     end,
     
     ToggleAutoCollect = function()
         HubFunctions.Frutas.AutoCollect = not HubFunctions.Frutas.AutoCollect
-        NotificationSystem:Create("Coleta Automática", HubFunctions.Frutas.AutoCollect and "Ativado" or "Desativado", 2, "info")
-    end
+        NotificationSystem:Create("Coleta Automática", HubFunctions.Frutas.AutoCollect and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Frutas.AutoCollect then
+            task.spawn(function()
+                while HubFunctions.Frutas.AutoCollect and RunService.Running do
+                    local char = LocalPlayer.Character
+                    if not char then task.wait(1) continue end
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    if not hrp then task.wait(1) continue end
+                    
+                    local fruits = BloxFruits:FindFruits()
+                    local closest = nil
+                    local closestDist = math.huge
+                    
+                    for _, fruit in pairs(fruits) do
+                        if fruit:IsA("BasePart") then
+                            local dist = (hrp.Position - fruit.Position).Magnitude
+                            if dist < closestDist then
+                                closestDist = dist
+                                closest = fruit
+                            end
+                        end
+                    end
+                    
+                    if closest then
+                        hrp.CFrame = CFrame.new(hrp.Position, closest.Position)
+                        if closestDist < 5 then
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                            task.wait(0.2)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                            NotificationSystem:Create("Coleta", "Fruta coletada!", 2)
+                        end
+                    end
+                    task.wait(0.1)
+                end
+            })
+        end
+    }
 }
 
 -- Funções Mapa
 HubFunctions.Mapa = {
     TeleportToIsland = function(islandName)
-        NotificationSystem:Create("Teleport", "Teleportando para " .. islandName, 2, "info")
+        local islands = BloxFruits:FindIslands()
+        for _, island in pairs(islands) do
+            if island.Name:find(islandName) or islandName:find(island.Name) then
+                local hrp = island:FindFirstChild("HumanoidRootPart") or island:FindFirstChild("RootPart") or island:FindFirstChildOfClass("BasePart")
+                if hrp then
+                    local char = LocalPlayer.Character
+                    if char then
+                        local charHrp = char:FindFirstChild("HumanoidRootPart")
+                        if charHrp then
+                            charHrp.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 10, 0))
+                            NotificationSystem:Create("Teleport", "Teleportado para " .. island.Name, 2)
+                        end
+                    end
+                end
+                break
+            end
+        end
     end,
     
     TeleportToNPC = function(npcName)
-        NotificationSystem:Create("Teleport", "Teleportando para " .. npcName, 2, "info")
-    end
+        local npcs = BloxFruits:FindNPCs()
+        for _, npc in pairs(npcs) do
+            if npc.Name:find(npcName) or npcName:find(npc.Name) then
+                local hrp = npc:FindFirstChild("HumanoidRootPart")
+                if hrp then
+                    local char = LocalPlayer.Character
+                    if char then
+                        local charHrp = char:FindFirstChild("HumanoidRootPart")
+                        if charHrp then
+                            charHrp.CFrame = CFrame.new(hrp.Position + Vector3.new(0, 5, 3))
+                            NotificationSystem:Create("Teleport", "Teleportado para " .. npc.Name, 2)
+                        end
+                    end
+                end
+                break
+            end
+        end
+    }
 }
 
 -- Funções Combate
@@ -251,25 +520,72 @@ HubFunctions.Combate = {
     AutoTarget = false,
     Targeting = false,
     EnemyFarm = false,
+    CombatLoop = nil,
     
     ToggleAutoAttack = function()
         HubFunctions.Combate.AutoAttack = not HubFunctions.Combate.AutoAttack
-        NotificationSystem:Create("Auto Attack", HubFunctions.Combate.AutoAttack and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Auto Attack", HubFunctions.Combate.AutoAttack and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Combate.AutoAttack then
+            HubFunctions.Combate.CombatLoop = RunService.Heartbeat:Connect(function()
+                local char = LocalPlayer.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+                
+                local npcs = BloxFruits:FindNPCs()
+                local closest = nil
+                local closestDist = math.huge
+                
+                for _, npc in pairs(npcs) do
+                    local npcHrp = npc:FindFirstChild("HumanoidRootPart")
+                    if npcHrp then
+                        local dist = (hrp.Position - npcHrp.Position).Magnitude
+                        if dist < closestDist and dist < 50 then
+                            closestDist = dist
+                            closest = npc
+                        end
+                    end
+                end
+                
+                if closest then
+                    local npcHrp = closest:FindFirstChild("HumanoidRootPart")
+                    if npcHrp then
+                        hrp.CFrame = CFrame.new(hrp.Position, npcHrp.Position)
+                        if closestDist < 15 then
+                            -- Simula ataque
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Q, false, game)
+                            task.wait(0.05)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Q, false, game)
+                            
+                            VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.E, false, game)
+                            task.wait(0.05)
+                            VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.E, false, game)
+                        end
+                    end
+                end
+            end)
+        else
+            if HubFunctions.Combate.CombatLoop then
+                HubFunctions.Combate.CombatLoop:Disconnect()
+                HubFunctions.Combate.CombatLoop = nil
+            end
+        end
     end,
     
     ToggleAutoTarget = function()
         HubFunctions.Combate.AutoTarget = not HubFunctions.Combate.AutoTarget
-        NotificationSystem:Create("Auto Target", HubFunctions.Combate.AutoTarget and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Auto Target", HubFunctions.Combate.AutoTarget and "Ativado" or "Desativado", 2)
     end,
     
     ToggleTargeting = function()
         HubFunctions.Combate.Targeting = not HubFunctions.Combate.Targeting
-        NotificationSystem:Create("Targeting", HubFunctions.Combate.Targeting and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Targeting", HubFunctions.Combate.Targeting and "Ativado" or "Desativado", 2)
     end,
     
     ToggleEnemyFarm = function()
         HubFunctions.Combate.EnemyFarm = not HubFunctions.Combate.EnemyFarm
-        NotificationSystem:Create("Farm de Inimigos", HubFunctions.Combate.EnemyFarm and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Farm de Inimigos", HubFunctions.Combate.EnemyFarm and "Ativado" or "Desativado", 2)
     end
 }
 
@@ -281,17 +597,17 @@ HubFunctions.Raids = {
     
     ToggleAutoRaid = function()
         HubFunctions.Raids.AutoRaid = not HubFunctions.Raids.AutoRaid
-        NotificationSystem:Create("Raid", HubFunctions.Raids.AutoRaid and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Raid", HubFunctions.Raids.AutoRaid and "Ativado" or "Desativado", 2)
     end,
     
     ToggleAutoEnter = function()
         HubFunctions.Raids.AutoEnter = not HubFunctions.Raids.AutoEnter
-        NotificationSystem:Create("Entrada Automática", HubFunctions.Raids.AutoEnter and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Entrada Automática", HubFunctions.Raids.AutoEnter and "Ativado" or "Desativado", 2)
     end,
     
     ToggleAutoCombat = function()
         HubFunctions.Raids.AutoCombat = not HubFunctions.Raids.AutoCombat
-        NotificationSystem:Create("Automação de Combate", HubFunctions.Raids.AutoCombat and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Automação de Combate", HubFunctions.Raids.AutoCombat and "Ativado" or "Desativado", 2)
     end
 }
 
@@ -303,17 +619,17 @@ HubFunctions.SeaEvents = {
     
     ToggleAutoEvent = function()
         HubFunctions.SeaEvents.AutoEvent = not HubFunctions.SeaEvents.AutoEvent
-        NotificationSystem:Create("Eventos Marítimos", HubFunctions.SeaEvents.AutoEvent and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Eventos Marítimos", HubFunctions.SeaEvents.AutoEvent and "Ativado" or "Desativado", 2)
     end,
     
     ToggleSeaBoss = function()
         HubFunctions.SeaEvents.SeaBoss = not HubFunctions.SeaEvents.SeaBoss
-        NotificationSystem:Create("Sea Bosses", HubFunctions.SeaEvents.SeaBoss and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Sea Bosses", HubFunctions.SeaEvents.SeaBoss and "Ativado" or "Desativado", 2)
     end,
     
     ToggleRewardFarm = function()
         HubFunctions.SeaEvents.RewardFarm = not HubFunctions.SeaEvents.RewardFarm
-        NotificationSystem:Create("Farm de Recompensas", HubFunctions.SeaEvents.RewardFarm and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Farm de Recompensas", HubFunctions.SeaEvents.RewardFarm and "Ativado" or "Desativado", 2)
     end
 }
 
@@ -326,22 +642,47 @@ HubFunctions.Itens = {
     
     ToggleChestESP = function()
         HubFunctions.Itens.ChestESP = not HubFunctions.Itens.ChestESP
-        NotificationSystem:Create("Chest ESP", HubFunctions.Itens.ChestESP and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Chest ESP", HubFunctions.Itens.ChestESP and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Itens.ChestESP then
+            task.spawn(function()
+                while HubFunctions.Itens.ChestESP and RunService.Running do
+                    local chests = BloxFruits:FindChests()
+                    for _, chest in pairs(chests) do
+                        local highlight = chest:FindFirstChildOfClass("Highlight")
+                        if not highlight then
+                            highlight = Instance.new("Highlight")
+                            highlight.Parent = chest
+                            highlight.FillColor = HubConfig.Theme.Accent
+                            highlight.FillTransparency = 0.3
+                            highlight.OutlineColor = HubConfig.Theme.Accent
+                            highlight.OutlineTransparency = 0.5
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+        else
+            for _, chest in pairs(BloxFruits:FindChests()) do
+                local highlight = chest:FindFirstChildOfClass("Highlight")
+                if highlight then highlight:Destroy() end
+            end
+        end
     end,
     
     ToggleChestFarm = function()
         HubFunctions.Itens.ChestFarm = not HubFunctions.Itens.ChestFarm
-        NotificationSystem:Create("Chest Farm", HubFunctions.Itens.ChestFarm and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Chest Farm", HubFunctions.Itens.ChestFarm and "Ativado" or "Desativado", 2)
     end,
     
     ToggleMaterialCollect = function()
         HubFunctions.Itens.MaterialCollect = not HubFunctions.Itens.MaterialCollect
-        NotificationSystem:Create("Coleta de Materiais", HubFunctions.Itens.MaterialCollect and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Coleta de Materiais", HubFunctions.Itens.MaterialCollect and "Ativado" or "Desativado", 2)
     end,
     
     ToggleDrops = function()
         HubFunctions.Itens.Drops = not HubFunctions.Itens.Drops
-        NotificationSystem:Create("Drops", HubFunctions.Itens.Drops and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Drops", HubFunctions.Itens.Drops and "Ativado" or "Desativado", 2)
     end
 }
 
@@ -355,27 +696,52 @@ HubFunctions.ESP = {
     
     TogglePlayers = function()
         HubFunctions.ESP.Players = not HubFunctions.ESP.Players
-        NotificationSystem:Create("Players ESP", HubFunctions.ESP.Players and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Players ESP", HubFunctions.ESP.Players and "Ativado" or "Desativado", 2)
     end,
     
     ToggleNPC = function()
         HubFunctions.ESP.NPC = not HubFunctions.ESP.NPC
-        NotificationSystem:Create("NPC ESP", HubFunctions.ESP.NPC and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("NPC ESP", HubFunctions.ESP.NPC and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.ESP.NPC then
+            task.spawn(function()
+                while HubFunctions.ESP.NPC and RunService.Running do
+                    local npcs = BloxFruits:FindNPCs()
+                    for _, npc in pairs(npcs) do
+                        local highlight = npc:FindFirstChildOfClass("Highlight")
+                        if not highlight then
+                            highlight = Instance.new("Highlight")
+                            highlight.Parent = npc
+                            highlight.FillColor = HubConfig.Theme.Primary
+                            highlight.FillTransparency = 0.4
+                            highlight.OutlineColor = HubConfig.Theme.Primary
+                            highlight.OutlineTransparency = 0.6
+                        end
+                    end
+                    task.wait(0.5)
+                end
+            end)
+        else
+            for _, npc in pairs(BloxFruits:FindNPCs()) do
+                local highlight = npc:FindFirstChildOfClass("Highlight")
+                if highlight then highlight:Destroy() end
+            end
+        end
     end,
     
     ToggleFruitESP = function()
         HubFunctions.ESP.FruitESP = not HubFunctions.ESP.FruitESP
-        NotificationSystem:Create("Fruit ESP", HubFunctions.ESP.FruitESP and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Fruit ESP", HubFunctions.ESP.FruitESP and "Ativado" or "Desativado", 2)
     end,
     
     ToggleChestESP = function()
         HubFunctions.ESP.ChestESP = not HubFunctions.ESP.ChestESP
-        NotificationSystem:Create("Chest ESP", HubFunctions.ESP.ChestESP and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Chest ESP", HubFunctions.ESP.ChestESP and "Ativado" or "Desativado", 2)
     end,
     
     ToggleBossESP = function()
         HubFunctions.ESP.BossESP = not HubFunctions.ESP.BossESP
-        NotificationSystem:Create("Boss ESP", HubFunctions.ESP.BossESP and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Boss ESP", HubFunctions.ESP.BossESP and "Ativado" or "Desativado", 2)
     end
 }
 
@@ -387,12 +753,26 @@ HubFunctions.Stats = {
     
     ToggleAutoDistribute = function()
         HubFunctions.Stats.AutoDistribute = not HubFunctions.Stats.AutoDistribute
-        NotificationSystem:Create("Distribuição Automática", HubFunctions.Stats.AutoDistribute and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Distribuição Automática", HubFunctions.Stats.AutoDistribute and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Stats.AutoDistribute then
+            task.spawn(function()
+                while HubFunctions.Stats.AutoDistribute and RunService.Running do
+                    task.wait(2)
+                    -- Simula distribuição de stats
+                    NotificationSystem:Create("Stats", "Distribuindo pontos...", 2)
+                    -- Simula clique nos botões de stat
+                    VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.L, false, game)
+                    task.wait(0.1)
+                    VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.L, false, game)
+                end
+            end)
+        end
     end,
     
     SetStatPoints = function(stat, points)
         HubFunctions.Stats.StatConfig[stat] = points
-        NotificationSystem:Create("Stats", stat .. " configurado para " .. points .. " pontos", 2, "info")
+        NotificationSystem:Create("Stats", stat .. " configurado para " .. points .. " pontos", 2)
     end
 }
 
@@ -402,393 +782,88 @@ HubFunctions.Movimentacao = {
     WalkSpeed = 16,
     JumpPower = 50,
     NoClip = false,
+    FlyLoop = nil,
     
     ToggleFly = function()
         HubFunctions.Movimentacao.Fly = not HubFunctions.Movimentacao.Fly
-        NotificationSystem:Create("Fly", HubFunctions.Movimentacao.Fly and "Ativado" or "Desativado", 2, "info")
+        NotificationSystem:Create("Fly", HubFunctions.Movimentacao.Fly and "Ativado" or "Desativado", 2)
+        
+        if HubFunctions.Movimentacao.Fly then
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.PlatformStand = true
+            end
+            
+            HubFunctions.Movimentacao.FlyLoop = RunService.Heartbeat:Connect(function()
+                local char = LocalPlayer.Character
+                if not char then return end
+                local hrp = char:FindFirstChild("HumanoidRootPart")
+                if not hrp then return end
+                local humanoid = char:FindFirstChild("Humanoid")
+                if not humanoid then return end
+                
+                local moveDirection = Vector3.new(0, 0, 0)
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then 
+                    moveDirection = moveDirection + hrp.CFrame.LookVector * 50 
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then 
+                    moveDirection = moveDirection - hrp.CFrame.LookVector * 50 
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then 
+                    moveDirection = moveDirection - hrp.CFrame.RightVector * 50 
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then 
+                    moveDirection = moveDirection + hrp.CFrame.RightVector * 50 
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.Space) then 
+                    moveDirection = moveDirection + Vector3.new(0, 50, 0) 
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.LeftShift) then 
+                    moveDirection = moveDirection - Vector3.new(0, 50, 0) 
+                end
+                
+                if moveDirection.Magnitude > 0 then
+                    hrp.Velocity = moveDirection
+                else
+                    hrp.Velocity = Vector3.new(0, 0, 0)
+                end
+            end)
+        else
+            if HubFunctions.Movimentacao.FlyLoop then
+                HubFunctions.Movimentacao.FlyLoop:Disconnect()
+                HubFunctions.Movimentacao.FlyLoop = nil
+            end
+            local char = LocalPlayer.Character
+            if char and char:FindFirstChild("Humanoid") then
+                char.Humanoid.PlatformStand = false
+            end
+        end
     end,
     
     SetWalkSpeed = function(value)
         HubFunctions.Movimentacao.WalkSpeed = value
-        NotificationSystem:Create("WalkSpeed", "Velocidade: " .. value, 2, "info")
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.WalkSpeed = value
+        end
+        NotificationSystem:Create("WalkSpeed", "Velocidade: " .. value, 2)
     end,
     
     SetJumpPower = function(value)
         HubFunctions.Movimentacao.JumpPower = value
-        NotificationSystem:Create("JumpPower", "Pulo: " .. value, 2, "info")
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid.JumpPower = value
+        end
+        NotificationSystem:Create("JumpPower", "Pulo: " .. value, 2)
     end,
     
     ToggleNoClip = function()
         HubFunctions.Movimentacao.NoClip = not HubFunctions.Movimentacao.NoClip
-        NotificationSystem:Create("NoClip", HubFunctions.Movimentacao.NoClip and "Ativado" or "Desativado", 2, "info")
-    end
-}
-
--- Funções Utilidades
-HubFunctions.Utilidades = {
-    Rejoin = function()
-        NotificationSystem:Create("Rejoin", "Reconectando...", 2, "info")
-        task.wait(1)
-        LocalPlayer:LoadCharacter()
-    end,
-    
-    ServerHop = function()
-        NotificationSystem:Create("Server Hop", "Procurando novo servidor...", 2, "info")
-        task.spawn(function()
-            task.wait(2)
-            NotificationSystem:Create("Server Hop", "Servidor encontrado!", 2, "success")
-        end)
-    end,
-    
-    AntiAFK = false,
-    
-    ToggleAntiAFK = function()
-        HubFunctions.Utilidades.AntiAFK = not HubFunctions.Utilidades.AntiAFK
-        NotificationSystem:Create("Anti-AFK", HubFunctions.Utilidades.AntiAFK and "Ativado" or "Desativado", 2, "info")
-    end,
-    
-    Notifications = function()
-        NotificationSystem:Create("Notificações", "Sistema de notificações ativo!", 2, "info")
-    end
-}
-
--- Funções Configurações
-HubFunctions.Configuracoes = {
-    SaveConfig = function()
-        Settings:Save()
-    end,
-    
-    LoadConfig = function()
-        Settings:Load()
-    end,
-    
-    CustomizeUI = function()
-        NotificationSystem:Create("Personalização", "Recursos de personalização", 2, "info")
-    end,
-    
-    Keybinds = function()
-        NotificationSystem:Create("Atalhos", "Sistema de atalhos de teclado", 2, "info")
-    end
-}
-
--- ========================================
--- Criação da UI
--- ========================================
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "NebulaHub"
-ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-
--- ========================================
--- Loading Screen
--- ========================================
-local LoadingScreen = Instance.new("Frame")
-LoadingScreen.Name = "LoadingScreen"
-LoadingScreen.Size = UDim2.new(1, 0, 1, 0)
-LoadingScreen.BackgroundColor3 = HubConfig.Theme.Background
-LoadingScreen.BackgroundTransparency = 0
-LoadingScreen.BorderSizePixel = 0
-LoadingScreen.Parent = ScreenGui
-
-local LoadingLogo = Instance.new("TextLabel")
-LoadingLogo.Size = UDim2.new(0, 300, 0, 60)
-LoadingLogo.Position = UDim2.new(0.5, -150, 0.5, -80)
-LoadingLogo.BackgroundTransparency = 1
-LoadingLogo.Font = Enum.Font.GothamBold
-LoadingLogo.Text = "NEBULA HUB"
-LoadingLogo.TextColor3 = HubConfig.Theme.Primary
-LoadingLogo.TextSize = 48
-LoadingLogo.Parent = LoadingScreen
-
-local LoadingSubtitle = Instance.new("TextLabel")
-LoadingSubtitle.Size = UDim2.new(0, 300, 0, 30)
-LoadingSubtitle.Position = UDim2.new(0.5, -150, 0.5, -20)
-LoadingSubtitle.BackgroundTransparency = 1
-LoadingSubtitle.Font = Enum.Font.Gotham
-LoadingSubtitle.Text = "Inicializando..."
-LoadingSubtitle.TextColor3 = HubConfig.Theme.TextDim
-LoadingSubtitle.TextSize = 16
-LoadingSubtitle.Parent = LoadingScreen
-
-local LoadingBar = Instance.new("Frame")
-LoadingBar.Size = UDim2.new(0, 200, 0, 4)
-LoadingBar.Position = UDim2.new(0.5, -100, 0.5, 40)
-LoadingBar.BackgroundColor3 = HubConfig.Theme.TextDim
-LoadingBar.BackgroundTransparency = 0.5
-LoadingBar.BorderSizePixel = 0
-LoadingBar.Parent = LoadingScreen
-
-local LoadingBarCorner = Instance.new("UICorner")
-LoadingBarCorner.CornerRadius = UDim.new(0, 2)
-LoadingBarCorner.Parent = LoadingBar
-
-local LoadingProgress = Instance.new("Frame")
-LoadingProgress.Size = UDim2.new(0, 0, 1, 0)
-LoadingProgress.BackgroundColor3 = HubConfig.Theme.Primary
-LoadingProgress.BorderSizePixel = 0
-LoadingProgress.Parent = LoadingBar
-
-local LoadingProgressCorner = Instance.new("UICorner")
-LoadingProgressCorner.CornerRadius = UDim.new(0, 2)
-LoadingProgressCorner.Parent = LoadingProgress
-
-task.spawn(function()
-    local progress = 0
-    while progress < 1 do
-        progress = progress + 0.01
-        LoadingProgress.Size = UDim2.new(progress, 0, 1, 0)
-        if progress < 0.3 then
-            LoadingSubtitle.Text = "Carregando módulos..."
-        elseif progress < 0.6 then
-            LoadingSubtitle.Text = "Configurando interface..."
-        elseif progress < 0.9 then
-            LoadingSubtitle.Text = "Inicializando funções..."
-        else
-            LoadingSubtitle.Text = "Pronto!"
-        end
-        task.wait(0.02)
-    end
-    task.wait(0.3)
-    TweenService:Create(LoadingScreen, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 1
-    }):Play()
-    task.wait(0.5)
-    LoadingScreen.Visible = false
-    LoadingScreen:Destroy()
-    MainFrame.Visible = true
-    MainFrame.Position = UDim2.new(0.5, -450, 0.5, -250)
-    MainFrame.BackgroundTransparency = 1
-    TweenService:Create(MainFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Position = UDim2.new(0.5, -450, 0.5, -300),
-        BackgroundTransparency = 0.95
-    }):Play()
-end)
-
--- ========================================
--- Main Hub Interface
--- ========================================
-local MainFrame = Instance.new("Frame")
-MainFrame.Name = "MainFrame"
-MainFrame.Size = UDim2.new(0, 900, 0, 600)
-MainFrame.Position = UDim2.new(0.5, -450, 0.5, -300)
-MainFrame.BackgroundColor3 = HubConfig.Theme.Background
-MainFrame.BackgroundTransparency = 0.95
-MainFrame.BorderSizePixel = 0
-MainFrame.Parent = ScreenGui
-MainFrame.Visible = false
-
-local MainCorner = Instance.new("UICorner")
-MainCorner.CornerRadius = UDim.new(0, 16)
-MainCorner.Parent = MainFrame
-
-local Shadow = Instance.new("Frame")
-Shadow.Name = "Shadow"
-Shadow.Size = UDim2.new(1, 20, 1, 20)
-Shadow.Position = UDim2.new(0, -10, 0, -10)
-Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-Shadow.BackgroundTransparency = 0.7
-Shadow.BorderSizePixel = 0
-Shadow.Parent = MainFrame
-
-local ShadowCorner = Instance.new("UICorner")
-ShadowCorner.CornerRadius = UDim.new(0, 16)
-ShadowCorner.Parent = Shadow
-
--- Barra de Título
-local TitleBar = Instance.new("Frame")
-TitleBar.Name = "TitleBar"
-TitleBar.Size = UDim2.new(1, 0, 0, 50)
-TitleBar.Position = UDim2.new(0, 0, 0, 0)
-TitleBar.BackgroundColor3 = HubConfig.Theme.Background
-TitleBar.BackgroundTransparency = 0.5
-TitleBar.BorderSizePixel = 0
-TitleBar.Parent = MainFrame
-
-local TitleBarCorner = Instance.new("UICorner")
-TitleBarCorner.CornerRadius = UDim.new(0, 16)
-TitleBarCorner.Parent = TitleBar
-
-local TitleText = Instance.new("TextLabel")
-TitleText.Size = UDim2.new(1, -120, 1, 0)
-TitleText.Position = UDim2.new(0, 20, 0, 0)
-TitleText.BackgroundTransparency = 1
-TitleText.Font = Enum.Font.GothamBold
-TitleText.Text = "NEBULA HUB v1.0.0"
-TitleText.TextColor3 = HubConfig.Theme.Text
-TitleText.TextSize = 18
-TitleText.TextXAlignment = Enum.TextXAlignment.Left
-TitleText.Parent = TitleBar
-
--- Botão Minimizar
-local MinimizeButton = Instance.new("TextButton")
-MinimizeButton.Size = UDim2.new(0, 30, 0, 30)
-MinimizeButton.Position = UDim2.new(1, -80, 0.5, -15)
-MinimizeButton.BackgroundColor3 = HubConfig.Theme.Background
-MinimizeButton.BackgroundTransparency = 0.5
-MinimizeButton.BorderSizePixel = 0
-MinimizeButton.Font = Enum.Font.Gotham
-MinimizeButton.Text = "─"
-MinimizeButton.TextColor3 = HubConfig.Theme.Text
-MinimizeButton.TextSize = 20
-MinimizeButton.Parent = TitleBar
-
-local MinCorner = Instance.new("UICorner")
-MinCorner.CornerRadius = UDim.new(0, 8)
-MinCorner.Parent = MinimizeButton
-
-MinimizeButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = not MainFrame.Visible
-end)
-
--- Botão Fechar
-local CloseButton = Instance.new("TextButton")
-CloseButton.Size = UDim2.new(0, 30, 0, 30)
-CloseButton.Position = UDim2.new(1, -40, 0.5, -15)
-CloseButton.BackgroundColor3 = HubConfig.Theme.Background
-CloseButton.BackgroundTransparency = 0.5
-CloseButton.BorderSizePixel = 0
-CloseButton.Font = Enum.Font.Gotham
-CloseButton.Text = "✕"
-CloseButton.TextColor3 = HubConfig.Theme.Text
-CloseButton.TextSize = 18
-CloseButton.Parent = TitleBar
-
-local CloseCorner = Instance.new("UICorner")
-CloseCorner.CornerRadius = UDim.new(0, 8)
-CloseCorner.Parent = CloseButton
-
-CloseButton.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    NotificationSystem:Create("Nebula Hub", "Hub fechado. Pressione F1 para abrir.", 3, "info")
-end)
-
--- Sidebar
-local Sidebar = Instance.new("Frame")
-Sidebar.Name = "Sidebar"
-Sidebar.Size = UDim2.new(0, 200, 1, -50)
-Sidebar.Position = UDim2.new(0, 0, 0, 50)
-Sidebar.BackgroundColor3 = HubConfig.Theme.Sidebar
-Sidebar.BackgroundTransparency = 0.3
-Sidebar.BorderSizePixel = 0
-Sidebar.Parent = MainFrame
-
-local SidebarCorner = Instance.new("UICorner")
-SidebarCorner.CornerRadius = UDim.new(0, 0)
-SidebarCorner.Parent = Sidebar
-
--- Barra de Pesquisa
-local SearchBar = Instance.new("Frame")
-SearchBar.Size = UDim2.new(1, -20, 0, 35)
-SearchBar.Position = UDim2.new(0, 10, 0, 10)
-SearchBar.BackgroundColor3 = HubConfig.Theme.Background
-SearchBar.BackgroundTransparency = 0.3
-SearchBar.BorderSizePixel = 0
-SearchBar.Parent = Sidebar
-
-local SearchCorner = Instance.new("UICorner")
-SearchCorner.CornerRadius = UDim.new(0, 8)
-SearchCorner.Parent = SearchBar
-
-local SearchIcon = Instance.new("TextLabel")
-SearchIcon.Size = UDim2.new(0, 25, 1, 0)
-SearchIcon.Position = UDim2.new(0, 5, 0, 0)
-SearchIcon.BackgroundTransparency = 1
-SearchIcon.Font = Enum.Font.Gotham
-SearchIcon.Text = "🔍"
-SearchIcon.TextColor3 = HubConfig.Theme.TextDim
-SearchIcon.TextSize = 14
-SearchIcon.Parent = SearchBar
-
-local SearchBox = Instance.new("TextBox")
-SearchBox.Size = UDim2.new(1, -35, 1, 0)
-SearchBox.Position = UDim2.new(0, 30, 0, 0)
-SearchBox.BackgroundTransparency = 1
-SearchBox.Font = Enum.Font.Gotham
-SearchBox.Text = "Pesquisar funções..."
-SearchBox.TextColor3 = HubConfig.Theme.TextDim
-SearchBox.TextSize = 12
-SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-SearchBox.Parent = SearchBar
-
--- Lista de Abas
-local TabList = Instance.new("ScrollingFrame")
-TabList.Size = UDim2.new(1, 0, 1, -55)
-TabList.Position = UDim2.new(0, 0, 0, 55)
-TabList.BackgroundTransparency = 1
-TabList.BorderSizePixel = 0
-TabList.ScrollBarThickness = 3
-TabList.Parent = Sidebar
-
-local TabListLayout = Instance.new("UIListLayout")
-TabListLayout.Padding = UDim.new(0, 4)
-TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-TabListLayout.Parent = TabList
-
--- Abas definidas
-local Tabs = {
-    {name = "FARM", icon = "⚔️", order = 1},
-    {name = "FRUTAS", icon = "🍎", order = 2},
-    {name = "MAPA", icon = "🌎", order = 3},
-    {name = "COMBATE", icon = "🥊", order = 4},
-    {name = "RAIDS", icon = "🚨", order = 5},
-    {name = "SEA EVENTS", icon = "🌊", order = 6},
-    {name = "ITENS", icon = "📦", order = 7},
-    {name = "ESP", icon = "👁️", order = 8},
-    {name = "STATS", icon = "📊", order = 9},
-    {name = "MOVIMENTAÇÃO", icon = "🪽", order = 10},
-    {name = "UTILIDADES", icon = "⚙️", order = 11},
-    {name = "CONFIGURAÇÕES", icon = "🔥", order = 12}
-}
-
--- Área de Conteúdo
-local ContentArea = Instance.new("Frame")
-ContentArea.Name = "ContentArea"
-ContentArea.Size = UDim2.new(1, -220, 1, -70)
-ContentArea.Position = UDim2.new(0, 210, 0, 60)
-ContentArea.BackgroundColor3 = HubConfig.Theme.Background
-ContentArea.BackgroundTransparency = 0.3
-ContentArea.BorderSizePixel = 0
-ContentArea.Parent = MainFrame
-
-local ContentCorner = Instance.new("UICorner")
-ContentCorner.CornerRadius = UDim.new(0, 12)
-ContentCorner.Parent = ContentArea
-
--- Painéis de conteúdo por aba
-local ContentPanels = {}
-
--- Função para criar toggle
-local function CreateToggle(parent, label, defaultValue, callback)
-    local frame = Instance.new("Frame")
-    frame.Size = UDim2.new(1, -20, 0, 40)
-    frame.BackgroundTransparency = 1
-    frame.Parent = parent
-    
-    local labelText = Instance.new("TextLabel")
-    labelText.Size = UDim2.new(0.7, 0, 1, 0)
-    labelText.BackgroundTransparency = 1
-    labelText.Font = Enum.Font.Gotham
-    labelText.Text = label
-    labelText.TextColor3 = HubConfig.Theme.Text
-    labelText.TextSize = 13
-    labelText.TextXAlignment = Enum.TextXAlignment.Left
-    labelText.Parent = frame
-    
-    local toggleButton = Instance.new("Frame")
-    toggleButton.Size = UDim2.new(0, 50, 0, 26)
-    toggleButton.Position = UDim2.new(1, -60, 0.5, -13)
-    toggleButton.BackgroundColor3 = defaultValue and HubConfig.Theme.ToggleOn or HubConfig.Theme.ToggleOff
-    toggleButton.BackgroundTransparency = 0.3
-    toggleButton.BorderSizePixel = 0
-    toggleButton.Parent = frame
-    
-    local toggleCorner = Instance.new("UICorner")
-    toggleCorner.CornerRadius = UDim.new(0, 13)
-    toggleCorner.Parent = toggleButton
-    
-    local toggleCircle = Instance.new("Frame")
-    toggleCircle.Size = UDim2.new(0, 20, 0, 20)
-    toggleCircle.Position = defaultValue and UDim2.new(1, -24, 0.5, -10) or UDim2.new(0, 4, 0.5, -10)
-    toggleCircle.BackgroundColor3 = HubConfig.Theme.Text
-    toggleCircle.BackgroundTransparency = 0.2
-    toggleCircle.BorderSize
+        NotificationSystem:Create("NoClip", HubFunctions.Movimentacao.NoClip and "Ativado" or "Desativado", 2)
+        
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.CanCollide = not HubFunctions.Movimentacao.NoClip
